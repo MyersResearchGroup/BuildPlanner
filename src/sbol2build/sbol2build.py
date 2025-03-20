@@ -1,6 +1,5 @@
 #Put code here
 import sbol2
-# import tyto TODO remove all tyto uris
 from Bio import Restriction
 from Bio.Seq import Seq
 from pydna.dseqrecord import Dseqrecord
@@ -55,7 +54,7 @@ def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.Mo
     else:
         part_in_backbone_component, part_in_backbone_seq = dna_componentdefinition_with_sequence2(identity, sequence, **kwargs)
     # double stranded
-    part_in_backbone_component.addRole('http://identifiers.org/SO:0000985')
+    part_in_backbone_component.addRole('http://identifiers.org/so/SO:0000985')
     for part_role in part_roles:  
         part_in_backbone_component.addRole(part_role)
 
@@ -74,17 +73,17 @@ def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.Mo
     insertion_sites_annotation.locations.add(insertion_site_location1)
     insertion_sites_annotation.locations.add(insertion_site_location2)
     
-    insertion_sites_annotation.roles = [tyto.SO.insertion_site]
+    insertion_sites_annotation.roles = ['https://identifiers.org/so/SO:0000366'] #insertion site
     if linear:
-        part_in_backbone_component.addRole('http://identifiers.org/SO:0000987') #linear
-        part_in_backbone_component.addRole('http://identifiers.org/SO:0000804') #engineered region
+        part_in_backbone_component.addRole('http://identifiers.org/so/SO:0000987') #linear
+        part_in_backbone_component.addRole('http://identifiers.org/so/SO:0000804') #engineered region
         # creating backbone feature
         open_backbone_location1 = sbol2.Range(start=1, end=part_location[0]+fusion_site_length-1) #order 1
         open_backbone_location2 = sbol2.Range(start=part_location[1]-fusion_site_length, end=len(sequence)) #order 3
         open_backbone_annotation = sbol2.SequenceAnnotation(locations=[open_backbone_location1, open_backbone_location2])
     else: 
-        part_in_backbone_component.addRole('http://identifiers.or/SO:0000988') #circular
-        part_in_backbone_component.addRole(tyto.SO.plasmid_vector)
+        part_in_backbone_component.addRole('http://identifiers.org/so/SO:0000988') #circular
+        part_in_backbone_component.addRole('https://identifiers.org/so/SO:0000755') #plasmid vector
         # creating backbone feature
         open_backbone_location1 = sbol2.Range( uri="backboneloc1", start=1, end=part_location[0]+fusion_site_length-1 ) #order 2
         open_backbone_location2 = sbol2.Range( uri="backboneloc2", start=part_location[1]-fusion_site_length, end=len(sequence)) #order 1
@@ -215,10 +214,6 @@ def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbo
     three_prime_oh_component.definition = three_prime_oh_definition
     three_prime_overhang_annotation = sbol2.SequenceAnnotation(uri="three_prime_overhang")
     three_prime_overhang_annotation.locations.add(three_prime_oh_location)
-    
-    # three_prime_overhang_annotation.addRole(tyto.SO.insertion_site) #TODO: do we need this, or change to three_prime_overhang_annotation.addRole('http://identifiers.org/SO:0000366')?
-
-    anno_component_dict = {}
 
     prod_component_definition.components = [five_prime_oh_component, three_prime_oh_component]
     three_prime_overhang_annotation.component = three_prime_oh_component
@@ -235,7 +230,7 @@ def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbo
                 three_prime_sequence = sbol2.Sequence(uri=f"{three_prime_oh_definition.displayId}_sequence", elements= seq.elements)
                 three_prime_sequence.wasDerivedFrom = seq.identity
                 three_prime_oh_definition.sequences = [three_prime_sequence]
-                three_prime_oh_definition.types.append("http://identifiers.org/SO:0000984") # single-stranded for overhangs
+                three_prime_oh_definition.types.append("http://identifiers.org/so/SO:0000984") # single-stranded for overhangs
                 
                 extracts_list.append((three_prime_oh_definition, three_prime_sequence))
                 extracts_list.append((definition, seq)) #add scars to list
@@ -249,7 +244,7 @@ def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbo
                 five_prime_sequence = sbol2.Sequence(uri=f"{five_prime_oh_definition.displayId}_sequence", elements= seq.elements)
                 five_prime_sequence.wasDerivedFrom = seq.identity
                 five_prime_oh_definition.sequences = [five_prime_sequence]
-                five_prime_oh_definition.types.append("http://identifiers.org/SO:0000984") # single-stranded for overhangs
+                five_prime_oh_definition.types.append("http://identifiers.org/so/SO:0000984") # single-stranded for overhangs
 
                 extracts_list.append((five_prime_oh_definition, five_prime_sequence))
                 extracts_list.append((definition, seq))
@@ -263,8 +258,8 @@ def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbo
     prod_component_definition.sequenceAnnotations.add(three_prime_overhang_annotation)
     prod_component_definition.sequenceAnnotations.add(five_prime_overhang_annotation)
     prod_component_definition.sequenceAnnotations.add(part_extract_annotation)
-    prod_component_definition.addRole(tyto.SO.engineered_insert) 
-    prod_component_definition.addType('http://identifiers.org/so/SO:0000987')
+    prod_component_definition.addRole('https://identifiers.org/so/SO:0000915') #engineered insert
+    prod_component_definition.addType('http://identifiers.org/so/SO:0000987') #linear
 
     #Add reference to part in backbone
     reactant_component = sbol2.FunctionalComponent(uri=f"{reactant_displayId}_reactant")
@@ -335,7 +330,7 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
             
         modifier_participation = sbol2.Participation(uri='restriction')
         modifier_participation.participant = enzyme_component
-        modifier_participation.roles = ['http://identifiers.org/SBO:0000019']
+        modifier_participation.roles = ['http://identifiers.org/sbo/SBO:0000019'] # modifier
         participations.append(modifier_participation)
 
     # Inform topology to PyDNA, if not found assuming linear. 
@@ -372,7 +367,7 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
 
     # five prime overhang
     five_prime_oh_definition = sbol2.ComponentDefinition(uri=f"{reactant_displayId}_five_prime_oh") # TODO: ensure circular type is preserved for sbh visualization
-    five_prime_oh_definition.addRole('http://identifiers.org/so/SO:0001932')
+    five_prime_oh_definition.addRole('http://identifiers.org/so/SO:0001932') #overhang 5 prime
     five_prime_oh_location = sbol2.Range(uri="five_prime_oh_location", start=1, end=len(product_5_prime_ss_end))
     five_prime_oh_component = sbol2.Component(uri=f"{reactant_displayId}_five_prime_oh_component")
     five_prime_oh_component.definition = five_prime_oh_definition
@@ -386,7 +381,7 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
     
     # three prime overhang
     three_prime_oh_definition = sbol2.ComponentDefinition(uri=f"{reactant_displayId}_three_prime_oh")
-    three_prime_oh_definition.addRole('http://identifiers.org/so/SO:0001933')
+    three_prime_oh_definition.addRole('http://identifiers.org/so/SO:0001933') #overhang 3 prime
     three_prime_oh_location = sbol2.Range(uri="three_prime_oh_location", start=len(product_sequence)-len(product_3_prime_ss_end)+1, end=len(product_sequence)) 
     three_prime_oh_component = sbol2.Component(uri=f"{reactant_displayId}_three_prime_oh_component")
     three_prime_oh_component.definition = three_prime_oh_definition
@@ -411,7 +406,7 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
                 three_prime_sequence = sbol2.Sequence(uri=f"{three_prime_oh_definition.displayId}_sequence", elements= seq.elements)
                 three_prime_sequence.wasDerivedFrom = seq.identity
                 three_prime_oh_definition.sequences = [three_prime_sequence]
-                three_prime_oh_definition.types.append("http://identifiers.org/SO:0000984") # single-stranded for overhangs
+                three_prime_oh_definition.types.append("http://identifiers.org/so/SO:0000984") # single-stranded for overhangs
                 
                 extracts_list.append((three_prime_oh_definition, three_prime_sequence))
                 extracts_list.append((definition, seq)) #add scars to list
@@ -425,7 +420,7 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
                 five_prime_sequence = sbol2.Sequence(uri=f"{five_prime_oh_definition.displayId}_sequence", elements= seq.elements)
                 five_prime_sequence.wasDerivedFrom = seq.identity
                 five_prime_oh_definition.sequences = [five_prime_sequence]
-                five_prime_oh_definition.types.append("http://identifiers.org/SO:0000984") # single-stranded for overhangs
+                five_prime_oh_definition.types.append("http://identifiers.org/so/SO:0000984") # single-stranded for overhangs
 
                 extracts_list.append((five_prime_oh_definition, five_prime_sequence))
                 extracts_list.append((definition, seq))
@@ -498,7 +493,7 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
 
     modifier_participation = sbol2.Participation(uri='ligation')
     modifier_participation.participant = ligase_component
-    modifier_participation.roles = ['http://identifiers.org/biomodels.sbo/SBO:0000019']
+    modifier_participation.roles = ['http://identifiers.org/biomodels.sbo/SBO:0000019'] # modifier
 
     # Create a dictionary that maps each first and last 4 letters to a list of strings that have those letters.
     reactant_parts = []
@@ -513,9 +508,9 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
                 raise ValueError(f'Fusion sites of different length within different parts. Check {reactant.identity} ')
         else:
             raise ValueError(f'Fusion sites of different length within the same part. Check {reactant.identity}')
-        if tyto.SO.plasmid_vector in reactant.roles:
+        if 'https://identifiers.org/so/SO:0000755' in reactant.roles:
             reactant_parts.append(reactant)
-        elif tyto.SO.engineered_insert in reactant.roles:
+        elif 'https://identifiers.org/so/SO:0000915' in reactant.roles:
             reactant_parts.append(reactant)
         else:
             raise ValueError(f'Part {reactant.identity} does not have a valid role')
@@ -639,7 +634,7 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
         # create dna component and sequence
         composite_component_definition, composite_seq = dna_componentdefinition_with_sequence2(f'composite_{composite_number}', composite_sequence_str)
         composite_component_definition.name = f'composite_{composite_number}'
-        composite_component_definition.addRole('http://identifiers.org/SO:0000804') #engineered region
+        composite_component_definition.addRole('http://identifiers.org/so/SO:0000804') #engineered region
         composite_component_definition.addType('http://identifiers.org/so/SO:0000988')
 
         part_extract_components = [] 
