@@ -1,12 +1,11 @@
 #Put code here
 import sbol2
-import tyto
-import re
+# import tyto TODO remove all tyto uris
 from Bio import Restriction
 from Bio.Seq import Seq
 from pydna.dseqrecord import Dseqrecord
 from itertools import product
-from typing import Dict, Iterable, List, Union, Optional, Tuple
+from typing import List, Union, Tuple
 
 sbol2.Config.setHomespace('https://SBOL2Build.org')
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_COMPLIANT_URIS, True)
