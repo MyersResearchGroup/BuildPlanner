@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "SBOL2Build"
+name = "sbol2build"
 version = "0.0.b1"
 description = "SBOL2Build: python package for construction of SBOL objects during build planning"
 readme = "README.md"
