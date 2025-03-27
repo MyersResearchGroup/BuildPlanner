@@ -46,10 +46,10 @@ def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.Mo
         raise ValueError('The part_location only accepts 2 int values in a list.')
     if len(sbol_comp.sequences)!=1:
         raise ValueError(f'The reactant needs to have precisely one sequence. The input reactant has {len(sbol_comp.sequences)} sequences')
-    sequence = doc.find(sbol_comp.sequences[0]).elements
+    sequence = sbol_comp.sequences[0].elements  #doc.find(sbol_comp.sequences[0]).elements  #TODO: check if this is the correct way to get the sequence
     if identity == None:
         part_in_backbone_component = sbol_comp 
-        part_in_backbone_seq = doc.find(sbol_comp.sequences[0]).elements
+        part_in_backbone_seq =  sbol_comp.sequences[0].elements #doc.find(sbol_comp.sequences[0]).elements #TODO: check if this is the correct way to get the sequence
         part_in_backbone_component.sequences = [part_in_backbone_seq]
     else:
         part_in_backbone_component, part_in_backbone_seq = dna_componentdefinition_with_sequence2(identity, sequence, **kwargs)
@@ -67,7 +67,7 @@ def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.Mo
     part_sequence_annotation.roles = part_roles
     part_sequence_annotation.locations.add(part_location_comp)
 
-    part_sequence_annotation.addRole(tyto.SO.engineered_insert)
+    part_sequence_annotation.addRole('https://identifiers.org/SO:0000915') #engineered insert
     insertion_sites_annotation = sbol2.SequenceAnnotation('insertion_sites_annotation')
 
     insertion_sites_annotation.locations.add(insertion_site_location1)
@@ -434,7 +434,7 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
     prod_backbone_definition.sequenceAnnotations.add(three_prime_overhang_annotation)
     prod_backbone_definition.sequenceAnnotations.add(five_prime_overhang_annotation)
     prod_backbone_definition.sequenceAnnotations.add(backbone_extract_annotation)
-    prod_backbone_definition.addRole(tyto.SO.plasmid_vector) 
+    prod_backbone_definition.addRole('https://identifiers.org/so/SO:0000755') 
 
     #Add reference to part in backbone
     reactant_component = sbol2.FunctionalComponent(uri=f'{reactant_component_definition.displayId}_backbone_reactant')
