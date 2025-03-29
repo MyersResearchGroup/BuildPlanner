@@ -466,10 +466,10 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
 def number_to_suffix(n):
     suffix = ""
     while n > 0:
-        n -= 1  # Adjust to make A = 0, B = 1, ..., Z = 25
-        remainder = n % 26  # Get the current character
-        suffix = chr(ord('A') + remainder) + suffix  # Build the suffix
-        n = n // 26  # Move to the next higher place value
+        n -= 1 
+        remainder = n % 26 
+        suffix = chr(ord('A') + remainder) + suffix
+        n = n // 26 
     return suffix
 
 def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.ModuleDefinition, document: sbol2.Document, ligase: sbol2.ComponentDefinition=None)->List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
