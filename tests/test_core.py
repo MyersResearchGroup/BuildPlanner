@@ -14,7 +14,6 @@ class Test_Core_Functions(unittest.TestCase):
     def test_part_digestion(self):
         doc = sbol2.Document()
         doc.read('test_files/pro_in_bb.xml')
-        print("\n".join(comp.identity for comp in doc.componentDefinitions))
 
         md = doc.getModuleDefinition('https://sbolcanvas.org/module1')
         assembly_plan = sbol2.ModuleDefinition('assembly_plan')
@@ -23,23 +22,15 @@ class Test_Core_Functions(unittest.TestCase):
 
         product_doc = sbol2.Document()
         for extract, sequence in parts_list:
-            print(extract.identity)
-            print(sequence.identity)
             product_doc.add(extract)
             product_doc.add(sequence)
         product_doc.add(assembly_plan)
 
-        print('\n'.join(part[0].displayId for part in parts_list))
-
-        #check that wasderivedfroms match, assembly plan records all interactions, 
-        print('\n')
         # ensure extracted part has 5prime, part from sbolcanvas, and 3prime
         for anno in parts_list[0][0].sequenceAnnotations:
             comp_uri = anno.component
             comp_obj = product_doc.find(comp_uri)
             comp_def = product_doc.find(comp_obj.definition)
-            print(comp_obj.displayId)
-            print(comp_def.roles)
 
             if 'three_prime_oh' in comp_obj.displayId:
                 self.assertEqual(comp_def.roles, ['http://identifiers.org/so/SO:0001933'], 'Part digestion missing 3 prime role')
@@ -48,17 +39,9 @@ class Test_Core_Functions(unittest.TestCase):
             else:
                 self.assertTrue(comp_def.identity in doc.componentDefinitions, 'Digested part missing reference to part from original document') #check that old part has been transcribed to new doc, in extracted part
 
-        print('\n')
-
+        # check that wasderivedfroms match, assembly plan records all interactions, 
         contains_restriction, contains_reactant, contains_product = False, False, False
-
         for participation in assembly_plan.interactions[0].participations:
-            print(participation.displayId)
-            print("participant = " + participation.participant)
-            print(product_doc.find(participation.participant).definition)
-            print(participation.roles)
-            print('\n')
-
             if participation.displayId == 'restriction':
                 self.assertTrue('http://identifiers.org/biomodels.sbo/SBO:0000019' in participation.roles, "Restriction participation missing 'modifier' role")
                 contains_restriction = True
