@@ -330,7 +330,7 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
             
         modifier_participation = sbol2.Participation(uri='restriction')
         modifier_participation.participant = enzyme_component
-        modifier_participation.roles = ['http://identifiers.org/sbo/SBO:0000019'] # modifier
+        modifier_participation.roles = ['http://identifiers.org/biomodels.sbo/SBO:0000019'] # modifier
         participations.append(modifier_participation)
 
     # Inform topology to PyDNA, if not found assuming linear. 
