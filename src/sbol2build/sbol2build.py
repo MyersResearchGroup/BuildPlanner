@@ -41,15 +41,15 @@ def dna_componentdefinition_with_sequence2(identity: str, sequence: str, **kwarg
 
     return dna_comp, comp_seq
 
-def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.ModuleDefinition, part_location: List[int], part_roles:List[str], fusion_site_length:int, linear:bool=False, **kwargs) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
+def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.ModuleDefinition, part_location: List[int], part_roles:List[str], fusion_site_length:int, document: sbol2.Document, linear:bool=False, **kwargs) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
     if len(part_location) != 2:
         raise ValueError('The part_location only accepts 2 int values in a list.')
     if len(sbol_comp.sequences)!=1:
         raise ValueError(f'The reactant needs to have precisely one sequence. The input reactant has {len(sbol_comp.sequences)} sequences')
-    sequence = sbol_comp.sequences[0].elements  #doc.find(sbol_comp.sequences[0]).elements  #TODO: check if this is the correct way to get the sequence
+    sequence = document.find(sbol_comp.sequences[0]).elements 
     if identity == None:
         part_in_backbone_component = sbol_comp 
-        part_in_backbone_seq =  sbol_comp.sequences[0].elements #doc.find(sbol_comp.sequences[0]).elements #TODO: check if this is the correct way to get the sequence
+        part_in_backbone_seq =  document.find(sbol_comp.sequences[0]).elements
         part_in_backbone_component.sequences = [part_in_backbone_seq]
     else:
         part_in_backbone_component, part_in_backbone_seq = dna_componentdefinition_with_sequence2(identity, sequence, **kwargs)
@@ -478,8 +478,8 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
     :param reactants: DNA parts to be ligated as SBOL ModuleDefinition. 
     :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participants
     :param document: SBOL2 document containing all reactant componentdefinitions.
-    :return: A tuple of ComponentDefinition and Sequence.
     :param ligase: as SBOL ComponentDefinition
+    :return: A tuple of ComponentDefinition and Sequence.
     """
     if ligase == None:
         ligase = sbol2.ComponentDefinition(uri="T4_Ligase")
@@ -586,7 +586,6 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
             reactant_component.definition = part_extract # TODO do not make new components, instead derive product functionalcomponents from the assembly_plan moduledefinition to add to the ligation interaction/participation
             for fc in assembly_plan.functionalComponents:
                 if fc.definition == reactant_component.definition:
-                   print(f"match: {fc.displayId}, {reactant_component.displayId}")
                    reactant_component = fc
 
             reactant_participation = sbol2.Participation(uri=f'{part_extract.displayId}_ligation')
@@ -624,11 +623,6 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
             part_extract_definitions.extend(temp_extract_components)
 
             composite_sequence_str = composite_sequence_str + part_extract_sequence[:-fusion_site_length] #needs a version for linear
-            # composite_name = composite_name + '_' + re.match(r'^[^_]*_[^_]*', part_extract.displayId).group()
-
-        for anno in anno_list:
-            for location in anno.locations:
-                print(anno.identity, location.start, location.end)
             
 
         # create dna component and sequence
