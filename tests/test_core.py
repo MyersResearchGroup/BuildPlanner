@@ -60,6 +60,9 @@ class Test_Core_Functions(unittest.TestCase):
         self.assertTrue(contains_reactant, 'Digestion Assembly plan missing reactant participation')
         self.assertTrue(contains_restriction, 'Digestion Assembly plan missing restriction participation')
 
+        sbol_validation_result = product_doc.validate()
+        self.assertEqual(sbol_validation_result, 'Valid.', 'Part Digestion SBOL validation failed')
+
     def test_backbone_digestion(self):
         doc = sbol2.Document()
         doc.read('test_files/backbone.xml')
@@ -107,6 +110,84 @@ class Test_Core_Functions(unittest.TestCase):
         self.assertTrue(contains_product, 'Digestion Assembly plan missing product participation')
         self.assertTrue(contains_reactant, 'Digestion Assembly plan missing reactant participation')
         self.assertTrue(contains_restriction, 'Digestion Assembly plan missing restriction participation')
+
+        sbol_validation_result = product_doc.validate()
+        self.assertEqual(sbol_validation_result, 'Valid.', 'Backbone Digestion SBOL validation failed')
+
+    def test_ligation(self):
+        ligation_doc = sbol2.Document()
+        temp_doc = sbol2.Document()
+        reactants_list = []
+        assembly_plan = sbol2.ModuleDefinition('assembly_plan')
+        parts = ['test_files/pro_in_bb.xml','test_files/rbs_in_bb.xml', 'test_files/cds_in_bb.xml', 'test_files/terminator_in_bb.xml']
+
+        for i, part in enumerate(parts):
+            temp_doc.read(part)
+            md = temp_doc.getModuleDefinition('https://sbolcanvas.org/module1')
+            extracts_tuple_list, assembly_plan = part_digestion(md, [rebase_restriction_enzyme('BsaI')], assembly_plan, temp_doc)
+
+            for extract, sequence in extracts_tuple_list:
+                try:
+                    ligation_doc.add(extract)
+                    ligation_doc.add(sequence)
+                except Exception as e: 
+                    if '<SBOLErrorCode.SBOL_ERROR_URI_NOT_UNIQUE: 17>' in str(e):
+                        pass
+                    else:
+                        print(e) 
+
+            reactants_list.append(extracts_tuple_list[0][0])
+
+        temp_doc.read('tests/test_files/backbone.xml')
+        # run digestion, extract component + sequence, add to ligation_doc, reactants_list
+        md = temp_doc.getModuleDefinition('https://sbolcanvas.org/module1')
+        extracts_tuple_list, assembly_plan = backbone_digestion(md, [rebase_restriction_enzyme('BsaI')], assembly_plan, temp_doc)
+        for extract, seq in extracts_tuple_list:
+            try:
+                ligation_doc.add(extract) #add only extracted definitions and and sequences from digestion
+                ligation_doc.add(seq)
+            except Exception as e: 
+                if '<SBOLErrorCode.SBOL_ERROR_URI_NOT_UNIQUE: 17>' in str(e):
+                    pass
+                else:
+                    print(e) 
+
+        ligation_doc.add(assembly_plan)
+        reactants_list.append(extracts_tuple_list[0][0])
+
+            
+        ligation_doc.add(rebase_restriction_enzyme('BsaI'))
+        ligation_doc.write('ligation_test1.xml')
+
+        pl = ligation2(reactants_list, assembly_plan, ligation_doc)
+
+        for p in pl:
+            for obj in p:
+                ligation_doc.add(obj)
+
+                if (type(obj) == sbol2.ComponentDefinition): 
+                    self.assertTrue('http://identifiers.org/so/SO:0000988' in obj.types, "Ligation product missing circular DNA type")
+                    self.assertTrue('http://www.biopax.org/release/biopax-level3.owl#DnaRegion' in obj.types, "Ligation product missing DNA region type")
+                    self.assertTrue('http://identifiers.org/so/SO:0000804' in obj.roles, "Ligation product missing engineered region role")
+
+                    locations = []
+
+                    for anno in obj.sequenceAnnotations:
+                        for location in anno.locations:
+                            locations.append((anno.identity, location.start, location.end))
+
+                    locations.sort(key=lambda x: x[1])
+
+                    for i in range(len(locations) - 1):
+                        current_end = locations[i][2]
+                        next_start = locations[i + 1][1]
+
+                        self.assertEqual(current_end + 1, next_start,
+                            f"Mismatch in continuity: {locations[i][0]} ends at {current_end}, "
+                            f"but {locations[i + 1][0]} starts at {next_start}")
+
+        sbol_validation_result = ligation_doc.validate()
+        self.assertEqual(sbol_validation_result, 'Valid.', 'Ligation SBOL validation failed')
 
 if __name__ == '__main__':
     unittest.main()
