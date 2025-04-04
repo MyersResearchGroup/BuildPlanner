@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
-from sbol2build import rebase_restriction_enzyme, backbone_digestion, part_digestion, ligation2
+from sbol2build import golden_gate_assembly_plan, rebase_restriction_enzyme, backbone_digestion, part_digestion, ligation2
 
 class Test_Core_Functions(unittest.TestCase):
     def test_part_digestion(self):
@@ -157,7 +157,6 @@ class Test_Core_Functions(unittest.TestCase):
 
             
         ligation_doc.add(rebase_restriction_enzyme('BsaI'))
-        ligation_doc.write('ligation_test1.xml')
 
         pl = ligation2(reactants_list, assembly_plan, ligation_doc)
 
@@ -188,6 +187,30 @@ class Test_Core_Functions(unittest.TestCase):
 
         sbol_validation_result = ligation_doc.validate()
         self.assertEqual(sbol_validation_result, 'Valid.', 'Ligation SBOL validation failed')
+    
+    def test_golden_gate(self):
+        pro_doc = sbol2.Document()
+        pro_doc.read('test_files/pro_in_bb.xml')
+    
+        rbs_doc = sbol2.Document()
+        rbs_doc.read('test_files/rbs_in_bb.xml')
+
+        cds_doc = sbol2.Document()
+        cds_doc.read('test_files/cds_in_bb.xml')
+        
+        ter_doc = sbol2.Document()
+        ter_doc.read('test_files/terminator_in_bb.xml')
+
+        bb_doc = sbol2.Document()
+        bb_doc.read('test_files/backbone.xml')
+
+        part_docs = [pro_doc, rbs_doc, cds_doc, ter_doc]
+
+        assembly_doc = sbol2.Document()
+        gg_assembly_plan = golden_gate_assembly_plan('testassem', part_docs, bb_doc, 'BsaI', assembly_doc)
+
+        sbol_validation_result = assembly_doc.validate()
+        self.assertEqual(sbol_validation_result, 'Valid.', 'Assembly SBOL validation failed')
 
 if __name__ == '__main__':
     unittest.main()
