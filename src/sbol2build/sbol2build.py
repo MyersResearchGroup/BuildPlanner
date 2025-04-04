@@ -661,3 +661,54 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
         products_list.append([composite_component_definition, composite_seq])
         composite_number += 1
     return products_list
+
+def append_extracts_to_doc(extract_tuples: List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], doc: sbol2.Document):
+    for extract, sequence in extract_tuples:
+        try:
+            doc.add(extract)
+            doc.add(sequence)
+        except Exception as e: 
+            if '<SBOLErrorCode.SBOL_ERROR_URI_NOT_UNIQUE: 17>' in str(e):
+                pass
+            else:
+                raise e
+
+class golden_gate_assembly_plan():
+    """Creates a Assembly Plan.
+    :param name: Name of the assembly plan ModuleDefinition.
+    :param parts_in_backbone: Parts in backbone to be assembled. 
+    :param plasmid_acceptor_backbone:  Backbone in which parts are inserted on the assembly. 
+    :param restriction_enzyme: Restriction enzyme name used by PyDNA. Case sensitive, follow standard restriction enzyme nomenclature, i.e. 'BsaI'
+    :param document: SBOL Document where the assembly plan will be created.
+    :param **kwargs: Keyword arguments of any other attribute for the assembled part.
+    """
+    def __init__(self, name: str, parts_in_backbone: List[sbol2.Document], plasmid_acceptor_backbone: sbol2.Document, restriction_enzyme: str, document: sbol2.Document):
+        self.name = name
+        self.parts_in_backbone = parts_in_backbone
+        self.backbone = plasmid_acceptor_backbone
+        self.restriction_enzyme = rebase_restriction_enzyme(restriction_enzyme)
+        self.extracted_parts = [] #list of tuples [ComponentDefinition, Sequence]
+        self.document = document
+
+        self.assembly_plan = sbol2.ModuleDefinition(name)
+        self.document.add(self.assembly_plan)
+        self.document.add(self.restriction_enzyme)
+        self.composites = []
+
+    def run(self):
+        for part_doc in self.parts_in_backbone:
+            md = part_doc.getModuleDefinition('https://sbolcanvas.org/module1') #change to toplevel or some other index?
+            extracts_tuple_list, _ = part_digestion(md, self.restriction_enzyme, self.assembly_plan, part_doc) #make sure assembly plan is pass-by-reference
+
+            append_extracts_to_doc(extracts_tuple_list, self.document)
+            self.extracted_parts.append(extracts_tuple_list[0][0])
+
+        md = self.backbone.getModuleDefinition('https://sbolcanvas.org/module1')
+        extracts_tuple_list, _ = backbone_digestion(md, self.restriction_enzyme, self.assembly_plan, self.backbone)
+        
+        append_extracts_to_doc(extracts_tuple_list, self.document)
+        self.extracted_parts.append(extracts_tuple_list[0][0])
+
+        self.composites = ligation2(self.extracted_parts, self.assembly_plan, self.document)
+
+        return self.composites
