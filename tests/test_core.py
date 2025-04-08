@@ -207,7 +207,11 @@ class Test_Core_Functions(unittest.TestCase):
         part_docs = [pro_doc, rbs_doc, cds_doc, ter_doc]
 
         assembly_doc = sbol2.Document()
-        gg_assembly_plan = golden_gate_assembly_plan('testassem', part_docs, bb_doc, 'BsaI', assembly_doc)
+        assembly_obj = golden_gate_assembly_plan('testassem', part_docs, bb_doc, 'BsaI', assembly_doc)
+
+        composites = assembly_obj.run()
+
+        assembly_doc.write('validation_assembly.xml')
 
         sbol_validation_result = assembly_doc.validate()
         self.assertEqual(sbol_validation_result, 'Valid.', 'Assembly SBOL validation failed')

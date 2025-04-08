@@ -595,8 +595,8 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
 
             for comp in part_extract.components:
                 if  "http://identifiers.org/so/SO:0001932" in document.getComponentDefinition(comp.definition).roles: #five prime
-                    scar_definition = sbol2.ComponentDefinition(uri=f"Scar_{number_to_suffix(scar_index)}")
-                    scar_sequence = sbol2.Sequence(uri=f"Scar_{number_to_suffix(scar_index)}_sequence", elements=document.getSequence(prev_three_prime_definition.sequences[0]).elements)
+                    scar_definition = sbol2.ComponentDefinition(uri=f"Ligation_Scar_{number_to_suffix(scar_index)}")
+                    scar_sequence = sbol2.Sequence(uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_sequence", elements=document.getSequence(prev_three_prime_definition.sequences[0]).elements)
                     scar_definition.sequences = [scar_sequence]
                     scar_definition.wasDerivedFrom = [comp.definition, prev_three_prime]
                     scar_definition.roles = ["http://identifiers.org/so/SO:0001953"]
@@ -605,8 +605,8 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
                     document.add(scar_definition)
                     document.add(scar_sequence)
 
-                    scar_location = sbol2.Range(uri=f"Scar_{number_to_suffix(scar_index)}_location", start= len(composite_sequence_str)+1, end=len(composite_sequence_str)+fusion_site_length)
-                    scar_anno = sbol2.SequenceAnnotation(uri=f"Scar_{number_to_suffix(scar_index)}_annotation")
+                    scar_location = sbol2.Range(uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_location", start= len(composite_sequence_str)+1, end=len(composite_sequence_str)+fusion_site_length)
+                    scar_anno = sbol2.SequenceAnnotation(uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_annotation")
                     scar_anno.locations.add(scar_location)
                     anno_list.append(scar_anno)
                     scar_index += 1
@@ -665,6 +665,7 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
 def append_extracts_to_doc(extract_tuples: List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], doc: sbol2.Document):
     for extract, sequence in extract_tuples:
         try:
+            print("adding: " + extract.displayId)
             doc.add(extract)
             doc.add(sequence)
         except Exception as e: 
@@ -698,17 +699,19 @@ class golden_gate_assembly_plan():
     def run(self):
         for part_doc in self.parts_in_backbone:
             md = part_doc.getModuleDefinition('https://sbolcanvas.org/module1') #change to toplevel or some other index?
-            extracts_tuple_list, _ = part_digestion(md, self.restriction_enzyme, self.assembly_plan, part_doc) #make sure assembly plan is pass-by-reference
+            extracts_tuple_list, _ = part_digestion(md, [self.restriction_enzyme], self.assembly_plan, part_doc) #make sure assembly plan is pass-by-reference
 
             append_extracts_to_doc(extracts_tuple_list, self.document)
             self.extracted_parts.append(extracts_tuple_list[0][0])
 
         md = self.backbone.getModuleDefinition('https://sbolcanvas.org/module1')
-        extracts_tuple_list, _ = backbone_digestion(md, self.restriction_enzyme, self.assembly_plan, self.backbone)
+        extracts_tuple_list, _ = backbone_digestion(md, [self.restriction_enzyme], self.assembly_plan, self.backbone)
         
         append_extracts_to_doc(extracts_tuple_list, self.document)
         self.extracted_parts.append(extracts_tuple_list[0][0])
 
         self.composites = ligation2(self.extracted_parts, self.assembly_plan, self.document)
+
+        append_extracts_to_doc(self.composites, self.document)
 
         return self.composites
