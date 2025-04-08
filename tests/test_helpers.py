@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
-from sbol2build import rebase_restriction_enzyme, dna_componentdefinition_with_sequence2, number_to_suffix, is_circular, part_in_backbone_from_sbol2
+from sbol2build import rebase_restriction_enzyme, dna_componentdefinition_with_sequence2, number_to_suffix, is_circular, append_extracts_to_doc, part_in_backbone_from_sbol2
 
 class Test_HelperFunctions(unittest.TestCase):
     def test_restriction_enzyme(self):
@@ -68,6 +68,22 @@ class Test_HelperFunctions(unittest.TestCase):
         self.assertEqual(number_to_suffix(703), "AAA")  # 26*27
         self.assertEqual(number_to_suffix(704), "AAB")  # 26*27 + 1
         self.assertEqual(number_to_suffix(0), "")
+
+    def test_append_extracts_to_doc(self):
+        doc = sbol2.Document()
+        tup1 = dna_componentdefinition_with_sequence2('def1', 'atgcaatg')
+        tup2 = dna_componentdefinition_with_sequence2('def2', 'ggacttaac')
+
+        append_extracts_to_doc([tup1, tup2, tup1], doc)
+
+        #ensure duplicate of tup1 is not being counted
+        self.assertEqual(len(doc.sequences), 2)
+        self.assertEqual(len(doc.componentDefinitions), 2)
+
+        self.assertEqual(doc.sequences[0].elements, 'atgcaatg')
+        self.assertEqual(doc.componentDefinitions[0].displayId, 'def1')
+        self.assertEqual(doc.sequences[1].elements, 'ggacttaac')
+        self.assertEqual(doc.componentDefinitions[1].displayId, 'def2')
 
     #TODO test for part in backbone?
 
