@@ -13,7 +13,7 @@ from sbol2build import golden_gate_assembly_plan, rebase_restriction_enzyme, bac
 class Test_Core_Functions(unittest.TestCase):
     def test_part_digestion(self):
         doc = sbol2.Document()
-        doc.read('test_files/pro_in_bb.xml')
+        doc.read('tests/test_files/pro_in_bb.xml')
 
         md = doc.getModuleDefinition('https://sbolcanvas.org/module1')
         assembly_plan = sbol2.ModuleDefinition('assembly_plan')
@@ -65,7 +65,7 @@ class Test_Core_Functions(unittest.TestCase):
 
     def test_backbone_digestion(self):
         doc = sbol2.Document()
-        doc.read('test_files/backbone.xml')
+        doc.read('tests/test_files/backbone.xml')
 
         md = doc.getModuleDefinition('https://sbolcanvas.org/module1')
         assembly_plan = sbol2.ModuleDefinition('assembly_plan')
@@ -119,7 +119,7 @@ class Test_Core_Functions(unittest.TestCase):
         temp_doc = sbol2.Document()
         reactants_list = []
         assembly_plan = sbol2.ModuleDefinition('assembly_plan')
-        parts = ['test_files/pro_in_bb.xml','test_files/rbs_in_bb.xml', 'test_files/cds_in_bb.xml', 'test_files/terminator_in_bb.xml']
+        parts = ['tests/test_files/pro_in_bb.xml','tests/test_files/rbs_in_bb.xml', 'tests/test_files/cds_in_bb.xml', 'tests/test_files/terminator_in_bb.xml']
 
         for i, part in enumerate(parts):
             temp_doc.read(part)
@@ -190,19 +190,19 @@ class Test_Core_Functions(unittest.TestCase):
     
     def test_golden_gate(self):
         pro_doc = sbol2.Document()
-        pro_doc.read('test_files/pro_in_bb.xml')
+        pro_doc.read('tests/test_files/pro_in_bb.xml')
     
         rbs_doc = sbol2.Document()
-        rbs_doc.read('test_files/rbs_in_bb.xml')
+        rbs_doc.read('tests/test_files/rbs_in_bb.xml')
 
         cds_doc = sbol2.Document()
-        cds_doc.read('test_files/cds_in_bb.xml')
+        cds_doc.read('tests/test_files/cds_in_bb.xml')
         
         ter_doc = sbol2.Document()
-        ter_doc.read('test_files/terminator_in_bb.xml')
+        ter_doc.read('tests/test_files/terminator_in_bb.xml')
 
         bb_doc = sbol2.Document()
-        bb_doc.read('test_files/backbone.xml')
+        bb_doc.read('tests/test_files/backbone.xml')
 
         part_docs = [pro_doc, rbs_doc, cds_doc, ter_doc]
 
