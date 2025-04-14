@@ -26,9 +26,7 @@ classifiers = [
 dependencies = [
     "sbol2",
     "biopython", 
-    "pydna",
-    "sphinx",
-    "furo"
+    "pydna"
 ]
 
 [project.optional-dependencies]
