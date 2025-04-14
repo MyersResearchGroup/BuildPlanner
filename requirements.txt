@@ -1,3 +1,5 @@
 sbol2
 biopython
 pydna
+sphinx
+furo
