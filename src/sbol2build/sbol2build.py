@@ -41,7 +41,22 @@ def dna_componentdefinition_with_sequence2(identity: str, sequence: str, **kwarg
 
     return dna_comp, comp_seq
 
-def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.ModuleDefinition, part_location: List[int], part_roles:List[str], fusion_site_length:int, document: sbol2.Document, linear:bool=False, **kwargs) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
+def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.ComponentDefinition, part_location: List[int], part_roles:List[str], fusion_site_length:int, document: sbol2.Document, linear:bool=False, **kwargs) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
+    """Restructures a plasmid ComponentDefinition to follow the part-in-backbone pattern with scars following BP011.
+    It overwrites the SBOL2 ComponentDefinition provided. 
+    A part inserted into a backbone is represented by a Component that includes both the part insert 
+    as a feature that is a SubComponent and the backbone as another SubComponent.
+    For more information about BP011 visit https://github.com/SynBioDex/SBOL-examples/tree/main/SBOL/best-practices/BP011 
+
+    :param identity: The identity of the Component, is its a String it build a new SBOL Component, if None it adds on top of the input. The identity of Sequence is also identity with the suffix '_seq'.
+    :param sbol_comp: The SBOL2 Component that will be used to create the part in backbone Component and Sequence.
+    :param part_location: List of 2 integers that indicates the start and the end of the unitary part. Note that the index of the first location is 1, as is typical practice in biology, rather than 0, as is typical practice in computer science.
+    :param part_roles: List of strings that indicates the roles to add on the part.
+    :param fusion_site_length: Integer of the length of the fusion sites (eg. BsaI fusion site lenght is 4, SapI fusion site lenght is 3)
+    :param linear: Boolean than indicates if the backbone is linear, by default it is seted to Flase which means that it has a circular topology.    
+    :param kwargs: Keyword arguments of any other Component attribute.
+    :return: ModuleDefinition in the form that sbolcanvas would output
+    """
     if len(part_location) != 2:
         raise ValueError('The part_location only accepts 2 int values in a list.')
     if len(sbol_comp.sequences)!=1:
