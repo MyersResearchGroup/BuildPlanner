@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
-from sbol2build import golden_gate_assembly_plan, rebase_restriction_enzyme, backbone_digestion, part_digestion, ligation2
+from sbol2build import golden_gate_assembly_plan, rebase_restriction_enzyme, backbone_digestion, part_digestion, ligation
 
 class Test_Core_Functions(unittest.TestCase):
     def test_part_digestion(self):
@@ -158,7 +158,7 @@ class Test_Core_Functions(unittest.TestCase):
             
         ligation_doc.add(rebase_restriction_enzyme('BsaI'))
 
-        pl = ligation2(reactants_list, assembly_plan, ligation_doc)
+        pl = ligation(reactants_list, assembly_plan, ligation_doc)
 
         for p in pl:
             for obj in p:

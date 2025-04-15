@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
-from sbol2build import rebase_restriction_enzyme, dna_componentdefinition_with_sequence2, number_to_suffix, is_circular, append_extracts_to_doc, part_in_backbone_from_sbol2
+from sbol2build import rebase_restriction_enzyme, dna_componentdefinition_with_sequence, number_to_suffix, is_circular, append_extracts_to_doc, part_in_backbone_from_sbol
 
 class Test_HelperFunctions(unittest.TestCase):
     def test_restriction_enzyme(self):
@@ -30,14 +30,14 @@ class Test_HelperFunctions(unittest.TestCase):
         # create a test dna component
         dna_identity = 'Test_dna_identity'
         dna_sequence = 'Test_dna_sequence'
-        test_dna_component, test_sequence = dna_componentdefinition_with_sequence2(dna_identity, dna_sequence)
+        test_dna_component, test_sequence = dna_componentdefinition_with_sequence(dna_identity, dna_sequence)
 
         test_cases = [
-            ("<class 'sbol2.componentdefinition.ComponentDefinition'>", repr(type(test_dna_component)), 'Constructor Error: dna_componentdefinition_with_sequence2, Not a ComponentDefinition'),
-            ("<class 'sbol2.sequence.Sequence'>", repr(type(test_sequence)), 'Constructor Error: dna_componentdefinition_with_sequence2, Not a Sequence'),
-            (f"https://SBOL2Build.org/{dna_identity}_seq/1", test_sequence.identity, 'Constructor Error: dna_componentdefinition_with_sequence2, Incorrect Identity'),
-            ([test_sequence.identity], test_dna_component.sequences, 'Constructor Error: dna_componentdefinition_with_sequence2, Sequence not in ComponentDefinition Sequences List'),
-            (['http://www.biopax.org/release/biopax-level3.owl#DnaRegion'], test_dna_component.types, 'Constructor Error: dna_componentdefinition_with_sequence2, Missing DNA type')
+            ("<class 'sbol2.componentdefinition.ComponentDefinition'>", repr(type(test_dna_component)), 'Constructor Error: dna_componentdefinition_with_sequence, Not a ComponentDefinition'),
+            ("<class 'sbol2.sequence.Sequence'>", repr(type(test_sequence)), 'Constructor Error: dna_componentdefinition_with_sequence, Not a Sequence'),
+            (f"https://SBOL2Build.org/{dna_identity}_seq/1", test_sequence.identity, 'Constructor Error: dna_componentdefinition_with_sequence, Incorrect Identity'),
+            ([test_sequence.identity], test_dna_component.sequences, 'Constructor Error: dna_componentdefinition_with_sequence, Sequence not in ComponentDefinition Sequences List'),
+            (['http://www.biopax.org/release/biopax-level3.owl#DnaRegion'], test_dna_component.types, 'Constructor Error: dna_componentdefinition_with_sequence, Missing DNA type')
         ]
 
         for expected, attribute, error_msg in test_cases:
@@ -71,8 +71,8 @@ class Test_HelperFunctions(unittest.TestCase):
 
     def test_append_extracts_to_doc(self):
         doc = sbol2.Document()
-        tup1 = dna_componentdefinition_with_sequence2('def1', 'atgcaatg')
-        tup2 = dna_componentdefinition_with_sequence2('def2', 'ggacttaac')
+        tup1 = dna_componentdefinition_with_sequence('def1', 'atgcaatg')
+        tup2 = dna_componentdefinition_with_sequence('def2', 'ggacttaac')
 
         append_extracts_to_doc([tup1, tup2, tup1], doc)
 

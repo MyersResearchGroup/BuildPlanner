@@ -27,7 +27,7 @@ def rebase_restriction_enzyme(name:str, **kwargs) -> sbol2.ComponentDefinition:
     cd.description = f'Restriction enzyme {name} from REBASE.'
     return cd
 
-def dna_componentdefinition_with_sequence2(identity: str, sequence: str, **kwargs) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
+def dna_componentdefinition_with_sequence(identity: str, sequence: str, **kwargs) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
     """Creates a DNA ComponentDefinition and its Sequence.
 
     :param identity: The identity of the Component. The identity of Sequence is also identity with the suffix '_seq'.
@@ -41,7 +41,7 @@ def dna_componentdefinition_with_sequence2(identity: str, sequence: str, **kwarg
 
     return dna_comp, comp_seq
 
-def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.ComponentDefinition, part_location: List[int], part_roles:List[str], fusion_site_length:int, document: sbol2.Document, linear:bool=False, **kwargs) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
+def part_in_backbone_from_sbol(identity: Union[str, None],  sbol_comp: sbol2.ComponentDefinition, part_location: List[int], part_roles:List[str], fusion_site_length:int, document: sbol2.Document, linear:bool=False, **kwargs) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
     """Restructures a plasmid ComponentDefinition to follow the part-in-backbone pattern with scars following BP011.
     It overwrites the SBOL2 ComponentDefinition provided. 
     A part inserted into a backbone is represented by a Component that includes both the part insert 
@@ -67,7 +67,7 @@ def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.Co
         part_in_backbone_seq =  document.find(sbol_comp.sequences[0]).elements
         part_in_backbone_component.sequences = [part_in_backbone_seq]
     else:
-        part_in_backbone_component, part_in_backbone_seq = dna_componentdefinition_with_sequence2(identity, sequence, **kwargs)
+        part_in_backbone_component, part_in_backbone_seq = dna_componentdefinition_with_sequence(identity, sequence, **kwargs)
     # double stranded
     part_in_backbone_component.addRole('http://identifiers.org/so/SO:0000985')
     for part_role in part_roles:  
@@ -207,7 +207,7 @@ def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbo
     product_5_prime_ss_strand, product_5_prime_ss_end = part_extract.seq.five_prime_end()
     product_3_prime_ss_strand, product_3_prime_ss_end = part_extract.seq.three_prime_end()
     product_sequence = str(part_extract.seq)
-    prod_component_definition, prod_seq = dna_componentdefinition_with_sequence2(identity=f'{reactant.functionalComponents[0].displayId}_extracted_part', sequence=product_sequence, **kwargs)
+    prod_component_definition, prod_seq = dna_componentdefinition_with_sequence(identity=f'{reactant.functionalComponents[0].displayId}_extracted_part', sequence=product_sequence, **kwargs)
     prod_component_definition.wasDerivedFrom = reactant_component_definition.identity
     extracts_list.append((prod_component_definition, prod_seq))
 
@@ -383,7 +383,7 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
     product_5_prime_ss_strand, product_5_prime_ss_end = backbone.seq.five_prime_end()
     product_3_prime_ss_strand, product_3_prime_ss_end = backbone.seq.three_prime_end()
     product_sequence = str(backbone.seq)
-    prod_backbone_definition, prod_seq = dna_componentdefinition_with_sequence2(identity=f'{reactant_component_definition.displayId}_extracted_backbone', sequence=product_sequence, **kwargs)
+    prod_backbone_definition, prod_seq = dna_componentdefinition_with_sequence(identity=f'{reactant_component_definition.displayId}_extracted_backbone', sequence=product_sequence, **kwargs)
     prod_backbone_definition.wasDerivedFrom = reactant_component_definition.identity
     extracts_list.append((prod_backbone_definition, prod_seq))
 
@@ -499,7 +499,7 @@ def number_to_suffix(n):
         n = n // 26 
     return suffix
 
-def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.ModuleDefinition, document: sbol2.Document, ligase: sbol2.ComponentDefinition=None)->List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
+def ligation(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.ModuleDefinition, document: sbol2.Document, ligase: sbol2.ComponentDefinition=None)->List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
     """Ligates Components using base complementarity and creates product Components and a ligation Interaction.
 
     :param reactants: DNA parts to be ligated as SBOL ModuleDefinition. 
@@ -652,7 +652,7 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
             
 
         # create dna component and sequence
-        composite_component_definition, composite_seq = dna_componentdefinition_with_sequence2(f'composite_{composite_number}', composite_sequence_str)
+        composite_component_definition, composite_seq = dna_componentdefinition_with_sequence(f'composite_{composite_number}', composite_sequence_str)
         composite_component_definition.name = f'composite_{composite_number}'
         composite_component_definition.addRole('http://identifiers.org/so/SO:0000804') #engineered region
         composite_component_definition.addType('http://identifiers.org/so/SO:0000988')
@@ -744,7 +744,7 @@ class golden_gate_assembly_plan():
         append_extracts_to_doc(extracts_tuple_list, self.document)
         self.extracted_parts.append(extracts_tuple_list[0][0])
 
-        self.composites = ligation2(self.extracted_parts, self.assembly_plan, self.document)
+        self.composites = ligation(self.extracted_parts, self.assembly_plan, self.document)
 
         append_extracts_to_doc(self.composites, self.document)
 
