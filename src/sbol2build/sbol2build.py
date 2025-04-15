@@ -125,20 +125,24 @@ def part_in_backbone_from_sbol2(identity: Union[str, None],  sbol_comp: sbol2.Co
 # helper function
 def is_circular(obj: sbol2.ComponentDefinition) -> bool:
     """Check if an SBOL Component or Feature is circular.
+
     :param obj: design to be checked
     :return: true if circular
     """    
     return any(n==sbol2.SO_CIRCULAR for n in obj.types)
 
 def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbol2.ComponentDefinition], assembly_plan:sbol2.ModuleDefinition, document: sbol2.Document, **kwargs)-> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], sbol2.ModuleDefinition]:
-    """Digests a ModuleDefinition using the provided restriction enzymes and creates a product ComponentDefinition and a digestion Interaction.
-    The product ComponentDefinition is assumed to be the insert for parts in backbone and the open backbone for backbones.
+    """Runs a simulated digestion on the top level sequence in the reactant ModuleDefinition with the given restriciton enzymes, creating a extracted part ComponentDefinition, a digestion Interaction, and converts existing scars to 5' and 3' overhangs.
+    The product ComponentDefinition is assumed the open backbone in this case.
+
+    Written for use with the SBOL2.3 output of https://sbolcanvas.org
 
     :param reactant: DNA to be digested as SBOL ModuleDefinition, usually a part_in_backbone. 
-    :param restriction_enzymes: Restriction enzymes used ComponentDefinition.
-    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participants
-    :param document: SBOL2 document to be used to extract referenced objects.
-    :return: A list of tuples of [ComponentDefinition, Sequence], and an assemblyplan ModuleDefinition.
+    :param restriction_enzymes: Restriction enzymes as :class:`sbol2.ComponentDefinition`
+                                (generate with :func:`rebase_restriction_enzyme`).
+    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participations
+    :param document: original SBOL2 document to be used to extract referenced objects.
+    :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
     """
     # extract component definition from module
     reactant_displayId = reactant.functionalComponents[0].displayId
@@ -304,14 +308,17 @@ def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbo
     return extracts_list, assembly_plan
 
 def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbol2.ComponentDefinition], assembly_plan:sbol2.ModuleDefinition, document: sbol2.Document, **kwargs)-> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], sbol2.ModuleDefinition]:
-    """Digests a ModuleDefinition using the provided restriction enzymes and creates a product ComponentDefinition and a digestion Interaction.
-    The product ComponentDefinition is assumed to be the insert for parts in backbone and the open backbone for backbones.
+    """Runs a simulated digestion on the top level sequence in the reactant ModuleDefinition with the given restriciton enzymes, creating an open backbone ComponentDefinition, a digestion Interaction, and converts existing scars to 5' and 3' overhangs.
+    The product ComponentDefinition is assumed the open backbone in this case.
+
+    Written for use with the SBOL2.3 output of https://sbolcanvas.org
 
     :param reactant: DNA to be digested as SBOL ModuleDefinition, usually a part_in_backbone. 
-    :param restriction_enzymes: Restriction enzymes used ComponentDefinition.
-    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participants
-    :param document: SBOL2 document to be used to extract referenced objects.
-    :return: A tuple of ComponentDefinition, Sequence, and ModuleDefinition.
+    :param restriction_enzymes: Restriction enzymes as :class:`sbol2.ComponentDefinition`
+                                (generate with :func:`rebase_restriction_enzyme`).
+    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participations
+    :param document: original SBOL2 document to be used to extract referenced objects.
+    :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
     """
     # extract component definition from module
     reactant_displayId = reactant.functionalComponents[0].displayId
@@ -479,6 +486,11 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
     return extracts_list, assembly_plan
 
 def number_to_suffix(n):
+    """Helper function for generating scar suffixes of the form: :math:`S=(A,B,C,…,Z,AA,AB,AC,…,AZ,BA,BB,…, S_n)`
+
+    :param n: Number to convert to character suffix
+    :return: Character suffix corresponding to n
+    """
     suffix = ""
     while n > 0:
         n -= 1 
@@ -488,13 +500,13 @@ def number_to_suffix(n):
     return suffix
 
 def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.ModuleDefinition, document: sbol2.Document, ligase: sbol2.ComponentDefinition=None)->List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
-    """Ligates Components using base complementarity and creates a product Component and a ligation Interaction.
+    """Ligates Components using base complementarity and creates product Components and a ligation Interaction.
 
     :param reactants: DNA parts to be ligated as SBOL ModuleDefinition. 
     :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participants
-    :param document: SBOL2 document containing all reactant componentdefinitions.
+    :param document: SBOL2 document containing all reactant ComponentDefinitions.
     :param ligase: as SBOL ComponentDefinition
-    :return: A tuple of ComponentDefinition and Sequence.
+    :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
     """
     if ligase == None:
         ligase = sbol2.ComponentDefinition(uri="T4_Ligase")
@@ -596,7 +608,6 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
             part_extract_sequence_uri = part_extract.sequences[0]
             part_extract_sequence = document.getSequence(part_extract_sequence_uri).elements
             temp_extract_components = []
-            # TODO create participations
             reactant_component = sbol2.FunctionalComponent(uri=f"{part_extract.displayId}_reactant")
             reactant_component.definition = part_extract # TODO do not make new components, instead derive product functionalcomponents from the assembly_plan moduledefinition to add to the ligation interaction/participation
             for fc in assembly_plan.functionalComponents:
@@ -678,6 +689,11 @@ def ligation2(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mo
     return products_list
 
 def append_extracts_to_doc(extract_tuples: List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], doc: sbol2.Document):
+    """Helper function for batch adding :class:`sbol2.ComponentDefinition` and :class:`sbol2.Sequence` to an :class:`sbol2.Document`
+
+    :param extract_tuples: list of tuples of :class:`sbol2.ComponentDefinition` and :class:`sbol2.Sequence`
+    :param doc: document which the content is to be added to
+    """
     for extract, sequence in extract_tuples:
         try:
             print("adding: " + extract.displayId)
@@ -690,13 +706,12 @@ def append_extracts_to_doc(extract_tuples: List[Tuple[sbol2.ComponentDefinition,
                 raise e
 
 class golden_gate_assembly_plan():
-    """Creates a Assembly Plan.
+    """Creates an Assembly Plan.
     :param name: Name of the assembly plan ModuleDefinition.
     :param parts_in_backbone: Parts in backbone to be assembled. 
     :param plasmid_acceptor_backbone:  Backbone in which parts are inserted on the assembly. 
     :param restriction_enzyme: Restriction enzyme name used by PyDNA. Case sensitive, follow standard restriction enzyme nomenclature, i.e. 'BsaI'
     :param document: SBOL Document where the assembly plan will be created.
-    :param **kwargs: Keyword arguments of any other attribute for the assembled part.
     """
     def __init__(self, name: str, parts_in_backbone: List[sbol2.Document], plasmid_acceptor_backbone: sbol2.Document, restriction_enzyme: str, document: sbol2.Document):
         self.name = name
@@ -712,6 +727,10 @@ class golden_gate_assembly_plan():
         self.composites = []
 
     def run(self):
+        """Runs assembly simulation.
+        `document` parameter of golden_gate_assembly_plan object is updated by reference to include assembly plan ModuleDefinition and all related information.
+        :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
+        """
         for part_doc in self.parts_in_backbone:
             md = part_doc.getModuleDefinition('https://sbolcanvas.org/module1') #change to toplevel or some other index?
             extracts_tuple_list, _ = part_digestion(md, [self.restriction_enzyme], self.assembly_plan, part_doc) #make sure assembly plan is pass-by-reference
