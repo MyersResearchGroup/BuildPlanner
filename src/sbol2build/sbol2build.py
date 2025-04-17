@@ -1,4 +1,3 @@
-#Put code here
 import sbol2
 from Bio import Restriction
 from Bio.Seq import Seq
@@ -53,7 +52,7 @@ def part_in_backbone_from_sbol(identity: Union[str, None],  sbol_comp: sbol2.Com
     :param part_location: List of 2 integers that indicates the start and the end of the unitary part. Note that the index of the first location is 1, as is typical practice in biology, rather than 0, as is typical practice in computer science.
     :param part_roles: List of strings that indicates the roles to add on the part.
     :param fusion_site_length: Integer of the length of the fusion sites (eg. BsaI fusion site lenght is 4, SapI fusion site lenght is 3)
-    :param linear: Boolean than indicates if the backbone is linear, by default it is seted to Flase which means that it has a circular topology.    
+    :param linear: Boolean than indicates if the backbone is linear, defaults to False (cicular topology).    
     :param kwargs: Keyword arguments of any other Component attribute.
     :return: ModuleDefinition in the form that sbolcanvas would output
     """
@@ -505,7 +504,7 @@ def ligation(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mod
     :param reactants: DNA parts to be ligated as SBOL ModuleDefinition. 
     :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participants
     :param document: SBOL2 document containing all reactant ComponentDefinitions.
-    :param ligase: as SBOL ComponentDefinition
+    :param ligase: as SBOL ComponentDefinition, optional (defaults to T4 ligase)
     :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
     """
     if ligase == None:
@@ -707,6 +706,7 @@ def append_extracts_to_doc(extract_tuples: List[Tuple[sbol2.ComponentDefinition,
 
 class golden_gate_assembly_plan():
     """Creates an Assembly Plan.
+
     :param name: Name of the assembly plan ModuleDefinition.
     :param parts_in_backbone: Parts in backbone to be assembled. 
     :param plasmid_acceptor_backbone:  Backbone in which parts are inserted on the assembly. 
@@ -726,9 +726,13 @@ class golden_gate_assembly_plan():
         self.document.add(self.restriction_enzyme)
         self.composites = []
 
-    def run(self):
-        """Runs assembly simulation.
+    def run(self) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
+        """Runs full assembly simulation.
+
         `document` parameter of golden_gate_assembly_plan object is updated by reference to include assembly plan ModuleDefinition and all related information.
+        
+        Runs :func:`part_digestion` for all `parts_in_backbone` and :func:`backbone_digestion` for `plasmid_acceptor_backbone` with `restriction_enzyme`. Then runs :func:`ligation` with these parts to form composites. 
+
         :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
         """
         for part_doc in self.parts_in_backbone:

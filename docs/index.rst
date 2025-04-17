@@ -14,12 +14,10 @@ It was developed to support build functionality and workflows in `SynBioSuite <h
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   
+   Installation
+   Tutorials
+   API_Reference
 
-API Reference
-=============
 
-.. automodule:: sbol2build.sbol2build
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
