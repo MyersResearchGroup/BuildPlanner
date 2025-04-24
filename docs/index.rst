@@ -15,9 +15,18 @@ It was developed to support build functionality and workflows in `SynBioSuite <h
    :maxdepth: 2
    :caption: Contents:
    
-   Installation
    Tutorials
    API_Reference
+
+============
+Installation
+============
+
+Install SBOL2Build with:
+
+.. code:: python
+    
+   pip install sbol2build
 
 
 
