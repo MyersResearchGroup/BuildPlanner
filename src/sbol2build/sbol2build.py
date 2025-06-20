@@ -21,7 +21,7 @@ def rebase_restriction_enzyme(name:str, **kwargs) -> sbol2.ComponentDefinition:
     cd = sbol2.ComponentDefinition(name)
     cd.types = sbol2.BIOPAX_PROTEIN
     cd.name = name
-    cd.roles = []
+    cd.roles = ["http://identifiers.org/obi/OBI:0000732"]
     cd.wasDerivedFrom = definition
     cd.description = f'Restriction enzyme {name} from REBASE.'
     return cd
@@ -515,6 +515,7 @@ def ligation(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mod
 
     ligase_component = sbol2.FunctionalComponent(uri="T4_Ligase")
     ligase_component.definition = ligase
+    ligase_component.roles = ["http://identifiers.org/ncit/NCIT:C16796"]
     assembly_plan.functionalComponents.add(ligase_component)
 
     modifier_participation = sbol2.Participation(uri='ligation')
