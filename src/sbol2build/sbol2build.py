@@ -283,8 +283,8 @@ def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbo
     reactant_component = sbol2.FunctionalComponent(uri=f"{reactant_displayId}_reactant")
     reactant_component.definition = reactant_component_definition
     assembly_plan.functionalComponents.add(reactant_component)
-
-    # Create reactant Participation.
+    
+    # Create Reactant Participation.
     reactant_participation = sbol2.Participation(uri=f"{reactant_displayId}_reactant")
     reactant_participation.participant = reactant_component
     reactant_participation.roles = [sbol2.SBO_REACTANT]
@@ -621,8 +621,8 @@ def ligation(reactants:List[sbol2.ComponentDefinition], assembly_plan: sbol2.Mod
 
             for comp in part_extract.components:
                 if  "http://identifiers.org/so/SO:0001932" in document.getComponentDefinition(comp.definition).roles: #five prime
-                    scar_definition = sbol2.ComponentDefinition(uri=f"Ligation_Scar_{number_to_suffix(scar_index)}")
-                    scar_sequence = sbol2.Sequence(uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_sequence", elements=document.getSequence(prev_three_prime_definition.sequences[0]).elements)
+                    scar_definition = sbol2.ComponentDefinition(uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_{part_extract.displayId}")
+                    scar_sequence = sbol2.Sequence(uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_{part_extract.displayId}_sequence", elements=document.getSequence(prev_three_prime_definition.sequences[0]).elements)
                     scar_definition.sequences = [scar_sequence]
                     scar_definition.wasDerivedFrom = [comp.definition, prev_three_prime]
                     scar_definition.roles = ["http://identifiers.org/so/SO:0001953"]
