@@ -194,13 +194,13 @@ def part_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List[sbo
 
 
     if len(digested_reactant)<2 or len(digested_reactant)>3: 
-        raise NotImplementedError(f'Not supported number of products. Found{len(digested_reactant)}')
+        raise ValueError(f'Not supported number of products. Found{len(digested_reactant)}')
     #TODO select them based on content rather than size.
     elif circular and len(digested_reactant)==2:
         part_extract, backbone = sorted(digested_reactant, key=len)
     elif linear and len(digested_reactant)==3:
         prefix, part_extract, suffix = digested_reactant
-    else: raise NotImplementedError('The reactant has no valid topology type')
+    else: raise ValueError('The reactant has no valid topology type')
 
     # Compute the length of single strand sticky ends or fusion sites
     product_5_prime_ss_strand, product_5_prime_ss_end = part_extract.seq.five_prime_end()
@@ -370,13 +370,13 @@ def backbone_digestion(reactant:sbol2.ModuleDefinition, restriction_enzymes:List
 
 
     if len(digested_reactant)<2 or len(digested_reactant)>3: 
-        raise NotImplementedError(f'Not supported number of products. Found{len(digested_reactant)}')
+        raise ValueError(f'Not supported number of products. Found{len(digested_reactant)}') #TODO make more specific for buildplanner
     #TODO select them based on content rather than size.
     elif circular and len(digested_reactant)==2:
         part_extract, backbone = sorted(digested_reactant, key=len)
     elif linear and len(digested_reactant)==3:
         prefix, part_extract, suffix = digested_reactant
-    else: raise NotImplementedError('The reactant has no valid topology type')
+    else: raise ValueError('The reactant has no valid topology type')
 
     # Compute the length of single strand sticky ends or fusion sites
     product_5_prime_ss_strand, product_5_prime_ss_end = backbone.seq.five_prime_end()

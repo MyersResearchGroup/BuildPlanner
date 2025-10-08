@@ -1,6 +1,6 @@
 import sbol2
 from typing import Dict, List
-from constants import FUSION_SITES
+from .constants import FUSION_SITES
 
 class MocloPlasmid:
     def __init__(self, name: str, definition: sbol2.ComponentDefinition, doc: sbol2.document):
@@ -70,13 +70,32 @@ def construct_plasmid_dict(part_list: List[sbol2.ComponentDefinition], plasmid_c
                         MocloPlasmid(componentName, toplevel_definition, plasmid_collection)
                     )
 
-        return plasmid_dict
+    return plasmid_dict
+    
+def get_compatibile_plasmids(plasmid_dict: Dict[str, List[MocloPlasmid]], backbone: MocloPlasmid):
+    selected_plasmids = []
+    match_to = backbone
+    match_idx = 0
+
+    for i, key in enumerate(plasmid_dict):
+        for plasmid in plasmid_dict[key]:
+            if plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]:
+                print(f"matched {plasmid.name} with {match_to.name} on fusion site {plasmid.fusion_sites[0]}!")
+                selected_plasmids.append(plasmid)
+                match_to = plasmid
+                match_idx = 1
+                break
+
+    return selected_plasmids
 
 # TODO potenitally replace each componentdefinition with a SBH URI, or extract definitions from SBH before calling
 def translate_abstract_to_plasmids(abstract_design_doc: sbol2.Document, plasmid_collection: sbol2.Document, backbone_doc: sbol2.Document):
     abstract_design_def = extract_toplevel_definition(abstract_design_doc)
     backbone_def = extract_toplevel_definition(backbone_doc)
 
-    ordered_part_definitions = extract_design_parts(abstract_design_def)
-    plasmid_dict = construct_plasmid_dict(ordered_part_definitions, plasmid_collection)
+    ordered_part_definitions = extract_design_parts(abstract_design_def, abstract_design_doc)
     
+    plasmid_dict = construct_plasmid_dict(ordered_part_definitions, plasmid_collection)
+    backbone_plasmid = MocloPlasmid(backbone_def.displayId, backbone_def, backbone_doc)
+
+    return get_compatibile_plasmids(plasmid_dict, backbone_plasmid)
