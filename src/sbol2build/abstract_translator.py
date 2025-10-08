@@ -53,22 +53,21 @@ def extract_toplevel_definition(doc: sbol2.Document) -> sbol2.ComponentDefinitio
 def construct_plasmid_dict(part_list: List[sbol2.ComponentDefinition], plasmid_collection: sbol2.Document) -> Dict[str, List[MocloPlasmid]]: 
     plasmid_dict = {}
     for part in part_list:
-        for plasmid in plasmid_collection.moduleDefinitions:
-            toplevel_URI = plasmid.functionalComponents[0].definition
-            toplevel_definition = plasmid_collection.getComponentDefinition(toplevel_URI)
+        for plasmid in plasmid_collection.componentDefinitions:
+            if 'http://identifiers.org/so/SO:0000637' in plasmid.roles:
+                print(plasmid, plasmid.roles)
+                for component in plasmid.components:
+                    if component.definition == str(part): #TODO make sure this is not a composite plasmid, i.e. plasmid just contains singular part of interest
+                        fusion_sites = [site.name for site in extract_fusion_sites(plasmid, plasmid_collection)]
+                        print(f"found: {component.definition} in {plasmid} with {fusion_sites}") #TODO switch to logger for backend tracing?
+                        plasmid_dict.setdefault(part.displayId, [])
 
-            for component in toplevel_definition.components:
-                if component.definition == str(part):
-                    fusion_sites = [site.name for site in extract_fusion_sites(toplevel_definition, plasmid_collection)]
-                    print(f"found: {component.definition} in {plasmid} with {fusion_sites}") #TODO switch to logger for backend tracing?
-                    plasmid_dict.setdefault(part.displayId, [])
-
-                    componentName = plasmid_collection.getComponentDefinition(component.definition).name
+                        componentName = plasmid_collection.getComponentDefinition(component.definition).name
 
 
-                    plasmid_dict[part.displayId].append(
-                        MocloPlasmid(componentName, toplevel_definition, plasmid_collection)
-                    )
+                        plasmid_dict[part.displayId].append(
+                            MocloPlasmid(componentName, plasmid, plasmid_collection)
+                        )
 
     return plasmid_dict
     
