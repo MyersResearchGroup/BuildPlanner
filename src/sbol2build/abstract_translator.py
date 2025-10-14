@@ -37,6 +37,16 @@ class MocloPlasmid:
 def extract_fusion_sites(
     plasmid: sbol2.ComponentDefinition, doc: sbol2.Document
 ) -> List[sbol2.ComponentDefinition]:
+    """
+    Returns all fusion site component definitions from a plasmid.
+
+    Args:
+        plasmid: :class:`sbol2.ComponentDefinition` representing the plasmid.
+        doc: :class:`sbol2.Document` containing component definitions.
+
+    Returns:
+        A list of fusion site component definitions.
+    """
     fusion_sites = []
     for component in plasmid.components:
         definition = doc.getComponentDefinition(component.definition)
@@ -49,6 +59,16 @@ def extract_fusion_sites(
 def extract_design_parts(
     design: sbol2.ComponentDefinition, doc: sbol2.Document
 ) -> List[sbol2.ComponentDefinition]:
+    """
+    Returns definitions of parts in a design in sequential order.
+
+    Args:
+        design: :class:`sbol2.ComponentDefinition` to extract parts from.
+        doc: :class:`sbol2.Document` containing all component definitions.
+
+    Returns:
+        A list of component definitions in sequential order.
+    """
     component_list = [c for c in design.getInSequentialOrder()]
     return [
         doc.getComponentDefinition(component.definition) for component in component_list
@@ -95,16 +115,32 @@ def construct_plasmid_dict(
     return plasmid_dict
 
 
-def get_compatibile_plasmids(
+def get_compatible_plasmids(
     plasmid_dict: Dict[str, List[MocloPlasmid]], backbone: MocloPlasmid
-):
+) -> List[MocloPlasmid]:
+    """
+    Returns a list of MocloPlasmid objects that can form a compatible assembly
+    with the given backbone plasmid. The function selects one plasmid from each
+    entry in the dictionary, ensuring that adjacent plasmids have matching fusion sites,
+    and that the first and last plasmids are compatible with the backbone.
+
+    Args:
+        plasmid_dict: A dictionary mapping assembly positions or categories to lists
+            of MocloPlasmid objects.
+        backbone: The backbone MocloPlasmid whose fusion sites define compatibility.
+
+    Returns:
+        A list of compatible MocloPlasmid objects forming a sequential assembly.
+    """
     selected_plasmids = []
     match_to = backbone
     match_idx = 0
 
     for i, key in enumerate(plasmid_dict):
         for plasmid in plasmid_dict[key]:
-            if plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]:
+            if (
+                plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]
+            ):  # TODO add error handling if no compatible plasmid found
                 print(
                     f"matched {plasmid.name} with {match_to.name} on fusion site {plasmid.fusion_sites[0]}!"
                 )
@@ -112,6 +148,7 @@ def get_compatibile_plasmids(
                 match_to = plasmid
                 match_idx = 1
                 break
+            # TODO edge case where second fusion site does not match terminator fusion site will not be caught by current logic
 
     return selected_plasmids
 
@@ -132,4 +169,4 @@ def translate_abstract_to_plasmids(
     plasmid_dict = construct_plasmid_dict(ordered_part_definitions, plasmid_collection)
     backbone_plasmid = MocloPlasmid(backbone_def.displayId, backbone_def, backbone_doc)
 
-    return get_compatibile_plasmids(plasmid_dict, backbone_plasmid)
+    return get_compatible_plasmids(plasmid_dict, backbone_plasmid)
