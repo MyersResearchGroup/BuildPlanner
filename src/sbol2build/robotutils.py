@@ -1,5 +1,5 @@
 import sbol2
-import JSON
+import json
 
 def assembly_plan_RDF_to_JSON(file):
     sbol2.Config.setOption('sbol_typed_uris', False)
