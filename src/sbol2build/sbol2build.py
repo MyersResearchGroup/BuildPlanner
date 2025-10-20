@@ -4,6 +4,7 @@ from Bio.Seq import Seq
 from pydna.dseqrecord import Dseqrecord
 from itertools import product
 from typing import List, Union, Tuple
+from .constants import DNA_TYPES
 
 sbol2.Config.setHomespace("https://SBOL2Build.org")
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_COMPLIANT_URIS, True)
@@ -182,7 +183,9 @@ def is_circular(obj: sbol2.ComponentDefinition) -> bool:
     :param obj: design to be checked
     :return: true if circular
     """
-    return any(n == sbol2.SO_CIRCULAR for n in obj.types)
+    return any(n == sbol2.SO_CIRCULAR for n in obj.types) or any(
+        n == "http://identifiers.org/so/SO:0000637" for n in obj.roles
+    )  # temporarily allowing 'engineered plasmid' role to qualify as circular
 
 
 def part_digestion(
@@ -217,9 +220,11 @@ def part_digestion(
         reactant_displayId = reactant.displayId
         reactant_component_definition = reactant
 
-    if sbol2.BIOPAX_DNA not in reactant_component_definition.types:
+    types = set(reactant_component_definition.types or [])
+
+    if not types.intersection(DNA_TYPES):
         raise TypeError(
-            f"The reactant should has a DNA type. Types found {reactant.types}."
+            f"The reactant should have a DNA type. Types found: {reactant.types}."
         )
     if len(reactant_component_definition.sequences) != 1:
         raise ValueError(
@@ -265,21 +270,20 @@ def part_digestion(
     reactant_seq = document.getSequence(reactant_seq).elements
     # Dseqrecord is from PyDNA package with reactant sequence
     ds_reactant = Dseqrecord(reactant_seq, circular=circular)
-    digested_reactant = ds_reactant.cut(
-        restriction_enzymes_pydna
-    )  # TODO see if ds_reactant.cut is working, causing problems downstream
+    digested_reactant = ds_reactant.cut(restriction_enzymes_pydna)
 
     if len(digested_reactant) < 2 or len(digested_reactant) > 3:
         raise ValueError(
             f"Not supported number of products. Found{len(digested_reactant)}"
         )
-    # TODO select them based on content rather than size.
     elif circular and len(digested_reactant) == 2:
         part_extract, backbone = sorted(digested_reactant, key=len)
     elif linear and len(digested_reactant) == 3:
         prefix, part_extract, suffix = digested_reactant
     else:
-        raise ValueError("The reactant has no valid topology type")
+        raise ValueError(
+            f"Reactant {reactant_component_definition.displayId} has no valid topology type, with {len(digested_reactant)} digested products, types: {reactant_component_definition.types}, and roles: {reactant_component_definition.roles}"
+        )
 
     # Compute the length of single strand sticky ends or fusion sites
     product_5_prime_ss_strand, product_5_prime_ss_end = (
@@ -290,7 +294,7 @@ def part_digestion(
     )
     product_sequence = str(part_extract.seq)
     prod_component_definition, prod_seq = dna_componentdefinition_with_sequence(
-        identity=f"{reactant.functionalComponents[0].displayId}_extracted_part",
+        identity=f"{reactant.displayId if isinstance(reactant, sbol2.ComponentDefinition) else reactant.functionalComponents[0].displayId}_extracted_part",
         sequence=product_sequence,
         **kwargs,
     )
@@ -466,13 +470,13 @@ def backbone_digestion(
         reactant_displayId = reactant.displayId
         reactant_component_definition = reactant
 
-    if sbol2.BIOPAX_DNA not in reactant_component_definition.types:
+    types = set(reactant_component_definition.types or [])
+
+    if not types.intersection(DNA_TYPES):
         raise TypeError(
-            f"The reactant should has a DNA type. Types founded {reactant.types}."
+            f"The reactant should have a DNA type. Types found: {reactant.types}."
         )
-    if (
-        len(reactant_component_definition.sequences) != 1
-    ):  # TODO review if true for MD, maybe for MD it will be 5
+    if len(reactant_component_definition.sequences) != 1:
         raise ValueError(
             f"The reactant needs to have precisely one sequence. The input reactant has {len(reactant.sequences)} sequences"
         )
@@ -522,7 +526,7 @@ def backbone_digestion(
 
     if len(digested_reactant) < 2 or len(digested_reactant) > 3:
         raise ValueError(
-            f"Not supported number of products. Found{len(digested_reactant)}"
+            f"Not supported number of products. Found: {len(digested_reactant)}"
         )  # TODO make more specific for buildplanner
     # TODO select them based on content rather than size.
     elif circular and len(digested_reactant) == 2:
@@ -1038,7 +1042,9 @@ class golden_gate_assembly_plan:
         self.document.add(self.restriction_enzyme)
         self.composites = []
 
-    def run(self) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
+    def run(
+        self, plasmids_in_module_definitions=False
+    ) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
         """Runs full assembly simulation.
 
         `document` parameter of golden_gate_assembly_plan object is updated by reference to include assembly plan ModuleDefinition and all related information.
@@ -1048,19 +1054,27 @@ class golden_gate_assembly_plan:
         :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
         """
         for part_doc in self.parts_in_backbone:
-            md = part_doc.getModuleDefinition(
-                "https://sbolcanvas.org/module1"
-            )  # change to toplevel or some other index?
+            if plasmids_in_module_definitions:
+                topLevel = part_doc.getModuleDefinition(
+                    "https://sbolcanvas.org/module1"
+                )  # TODO change to toplevel or some other index?
+            else:
+                topLevel = part_doc.componentDefinitions[0]
             extracts_tuple_list, _ = part_digestion(
-                md, [self.restriction_enzyme], self.assembly_plan, part_doc
+                topLevel, [self.restriction_enzyme], self.assembly_plan, part_doc
             )  # make sure assembly plan is pass-by-reference
 
             append_extracts_to_doc(extracts_tuple_list, self.document)
             self.extracted_parts.append(extracts_tuple_list[0][0])
 
-        md = self.backbone.getModuleDefinition("https://sbolcanvas.org/module1")
+        if plasmids_in_module_definitions:
+            topLevel = self.backbone.getModuleDefinition(
+                "https://sbolcanvas.org/module1"
+            )  # TODO change to toplevel or some other index?
+        else:
+            topLevel = self.backbone.componentDefinitions[0]
         extracts_tuple_list, _ = backbone_digestion(
-            md, [self.restriction_enzyme], self.assembly_plan, self.backbone
+            topLevel, [self.restriction_enzyme], self.assembly_plan, self.backbone
         )
 
         append_extracts_to_doc(extracts_tuple_list, self.document)
