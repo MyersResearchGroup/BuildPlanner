@@ -372,7 +372,7 @@ def part_digestion(
                 extracts_list.append((three_prime_oh_definition, three_prime_sequence))
                 extracts_list.append((definition, seq))  # add scars to list
 
-            elif seq.elements.lower() == product_sequence[4:-4]:
+            elif seq.elements.lower() == product_sequence[4:-4].lower():
                 original_part_def_URI = definition.identity
                 extracts_list.append((definition, seq))
 
@@ -626,7 +626,7 @@ def backbone_digestion(
                 extracts_list.append((three_prime_oh_definition, three_prime_sequence))
                 extracts_list.append((definition, seq))  # add scars to list
 
-            elif seq.elements.lower() == product_sequence[4:-4]:
+            elif seq.elements.lower() == product_sequence[4:-4].lower():
                 original_backbone_def_URI = definition.identity
                 extracts_list.append((definition, seq))
 
