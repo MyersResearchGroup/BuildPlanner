@@ -76,10 +76,7 @@ def extract_design_parts(
 
 
 def extract_toplevel_definition(doc: sbol2.Document) -> sbol2.ComponentDefinition:
-    module = doc.moduleDefinitions[0]
-    functional_component = module.functionalComponents[0]
-
-    return doc.getComponentDefinition(functional_component.definition)
+    return doc.componentDefinitions[0]
 
 
 def construct_plasmid_dict(
