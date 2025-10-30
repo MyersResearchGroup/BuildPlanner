@@ -17,3 +17,6 @@ It was developed to support build functionality and workflows in [SynBioSuite](h
 ## Documentation
 
  Please visit the documentation with API reference and tutorials at Read the Docs: [sbol2build.rtfd.io](https://sbol2build.readthedocs.io)
+
+#### Running tests:
+`python -m unittest discover -s tests`
