@@ -29,19 +29,26 @@ def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
 
 
 def dna_componentdefinition_with_sequence(
-    identity: str, sequence: str, **kwargs
+    identity: str, sequence: str, molecule: bool = False, **kwargs
 ) -> Tuple[sbol2.ComponentDefinition, sbol2.Sequence]:
     """Creates a DNA ComponentDefinition and its Sequence.
 
     :param identity: The identity of the Component. The identity of Sequence is also identity with the suffix '_seq'.
     :param sequence: The DNA sequence of the Component encoded in IUPAC.
+    :param molecule: Boolean value: true if type should be DNA molecule, false if DNA region
     :param kwargs: Keyword arguments of any other Component attribute.
     :return: A tuple of ComponentDefinition and Sequence.
     """
     comp_seq = sbol2.Sequence(
         f"{identity}_seq", elements=sequence, encoding=sbol2.SBOL_ENCODING_IUPAC
     )
-    dna_comp = sbol2.ComponentDefinition(identity, sbol2.BIOPAX_DNA, **kwargs)
+    dna_comp = sbol2.ComponentDefinition(
+        identity,
+        "http://www.biopax.org/release/biopax-level3.owl#Dna"
+        if molecule
+        else sbol2.BIOPAX_DNA,
+        **kwargs,
+    )
     dna_comp.sequences = [comp_seq]
 
     return dna_comp, comp_seq
@@ -853,6 +860,7 @@ def ligation(
     for composite in list_of_composites_per_assembly:  # a composite of the form [A,B,C]
         # calculate sequence
         composite_sequence_str = ""
+        participations = []
         prev_three_prime = (
             composite[len(composite) - 1].components[1].definition
         )  # componentdefinitionuri
@@ -901,8 +909,8 @@ def ligation(
                     scar_definition.roles = ["http://identifiers.org/so/SO:0001953"]
                     temp_extract_components.append(scar_definition.identity)
 
-                    document.add(scar_definition)
-                    document.add(scar_sequence)
+                    add_object_to_doc(scar_definition, document)
+                    add_object_to_doc(scar_sequence, document)
 
                     scar_location = sbol2.Range(
                         uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_location",
@@ -946,7 +954,7 @@ def ligation(
         # create dna component and sequence
         composite_component_definition, composite_seq = (
             dna_componentdefinition_with_sequence(
-                f"composite_{composite_number}", composite_sequence_str
+                f"composite_{composite_number}", composite_sequence_str, molecule=True
             )
         )
         composite_component_definition.name = f"composite_{composite_number}"
@@ -994,7 +1002,7 @@ def ligation(
 def append_extracts_to_doc(
     extract_tuples: List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]],
     doc: sbol2.Document,
-):
+) -> None:
     """Helper function for batch adding :class:`sbol2.ComponentDefinition` and :class:`sbol2.Sequence` to an :class:`sbol2.Document`
 
     :param extract_tuples: list of tuples of :class:`sbol2.ComponentDefinition` and :class:`sbol2.Sequence`
@@ -1003,13 +1011,26 @@ def append_extracts_to_doc(
     for extract, sequence in extract_tuples:
         try:
             print("adding: " + extract.displayId)
-            doc.add(extract)
-            doc.add(sequence)
+            add_object_to_doc(extract, doc)
+            add_object_to_doc(sequence, doc)
         except Exception as e:
             if "<SBOLErrorCode.SBOL_ERROR_URI_NOT_UNIQUE: 17>" in str(e):
                 pass
             else:
                 raise e
+
+
+def add_object_to_doc(
+    obj: sbol2.SBOLObject,
+    doc: sbol2.Document,
+) -> None:
+    try:
+        doc.add(obj)
+    except Exception as e:
+        if "<SBOLErrorCode.SBOL_ERROR_URI_NOT_UNIQUE: 17>" in str(e):
+            pass
+        else:
+            raise e
 
 
 class golden_gate_assembly_plan:
