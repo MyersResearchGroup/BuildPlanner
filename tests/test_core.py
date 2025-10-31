@@ -265,9 +265,9 @@ class Test_Core_Functions(unittest.TestCase):
                         "Ligation product missing circular DNA type",
                     )
                     self.assertTrue(
-                        "http://www.biopax.org/release/biopax-level3.owl#DnaRegion"
+                        "http://www.biopax.org/release/biopax-level3.owl#Dna"
                         in obj.types,
-                        "Ligation product missing DNA region type",
+                        "Ligation product missing DNA Molecule type",
                     )
                     self.assertTrue(
                         "http://identifiers.org/so/SO:0000804" in obj.roles,
