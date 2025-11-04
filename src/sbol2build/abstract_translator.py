@@ -205,7 +205,7 @@ def get_compatible_plasmids(
     """
     Returns a list of MocloPlasmid objects that can form a compatible assembly
     with the given backbone plasmid. The function selects one plasmid from each
-    entry in the dictionary, ensuring that adjacent plasmids have matching fusion sites,
+    entry in the dictionary, ensuring that adjacent plasmids have matching MoClo fusion sites,
     and that the first and last plasmids are compatible with the backbone.
 
     Args:
