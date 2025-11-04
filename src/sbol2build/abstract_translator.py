@@ -1,5 +1,6 @@
 import sbol2
-from typing import Dict, List
+import itertools
+from typing import Dict, List, Set
 from .constants import FUSION_SITES
 
 
@@ -32,6 +33,14 @@ class MocloPlasmid:
             f"  Definition: {self.definition.identity}\n"
             f"  Fusion Sites: {self.fusion_sites or 'Not found'}"
         )
+
+    def __eq__(self, other):
+        if not isinstance(other, MocloPlasmid):
+            return False
+        return self.definition == other.definition
+
+    def __hash__(self):
+        return hash(self.definition)
 
 
 def extract_fusion_sites(
@@ -75,13 +84,91 @@ def extract_design_parts(
     ]
 
 
+def extract_combinatorial_design_parts(
+    design: sbol2.ComponentDefinition, doc: sbol2.Document, plasmid_doc
+) -> Dict[str, List[sbol2.ComponentDefinition]]:
+    """
+    Extracts and returns a mapping of component definitions from a combinatorial design, in order.
+    Variants of combinatinatorial components are entered in a list corresponding to the URI of the component in the abstract design.
+
+    Args:
+        design:
+            The :class:`sbol2.ComponentDefinition` representing the top-level design
+            from which to extract parts.
+        doc:
+            The primary :class:`sbol2.Document` containing the base component definitions
+            and combinatorial derivations.
+        plasmid_doc:
+            An additional :class:`sbol2.Document` used to resolve component variants
+            (plasmid-specific variants referenced by combinatorial derivations).
+
+    Returns:
+        Dict[str, List[sbol2.ComponentDefinition]]:
+            A dictionary mapping component identities to lists
+            of variable component definitions.
+
+            - Sequential design components map to lists containing a single definition.
+            - Combinatorial variable components map to lists of variant definitions.
+    """
+    component_list = [c for c in design.getInSequentialOrder()]
+    component_dict = {
+        component.identity: [doc.getComponentDefinition(component.definition)]
+        for component in component_list
+    }
+
+    for deriv in doc.combinatorialderivations:
+        for component in deriv.variableComponents:
+            component_dict[component.variable] = [
+                plasmid_doc.getComponentDefinition(var) for var in component.variants
+            ]
+
+    return component_dict
+
+
 def extract_toplevel_definition(doc: sbol2.Document) -> sbol2.ComponentDefinition:
     return doc.componentDefinitions[0]
+
+
+def enumerate_design_variants(component_dict):
+    """
+    Given a dict mapping variable component identities to lists of ComponentDefinitions,
+    generate all possible design combinations as lists of ComponentDefinitions
+    (in consistent order of keys).
+    """
+    keys = list(component_dict.keys())
+    variant_lists = [component_dict[k] for k in keys]
+
+    # Cartesian product across all variant lists
+    all_variants = list(itertools.product(*variant_lists))
+
+    all_variants = [list(combo) for combo in all_variants]
+
+    return all_variants
 
 
 def construct_plasmid_dict(
     part_list: List[sbol2.ComponentDefinition], plasmid_collection: sbol2.Document
 ) -> Dict[str, List[MocloPlasmid]]:
+    """
+    Builds a mapping from part display IDs to lists of compatible MoCloPlasmid objects.
+
+    For each part in the given list, this function searches the provided plasmid
+    collection for plasmids that contain the part as a component.
+    Each matching plasmid is wrapped in a `MocloPlasmid` object and added to the
+    dictionary under the part's display ID.
+
+    Args:
+        part_list:
+            List of :class:`sbol2.ComponentDefinition` objects representing
+            the parts to match.
+        plasmid_collection:
+            The :class:`sbol2.Document` containing plasmids to search through.
+
+    Returns:
+        Dict[str, List[MocloPlasmid]]:
+            A dictionary mapping each part display ID to a list of corresponding
+            `MocloPlasmid` objects found in the collection.
+    """
     plasmid_dict = {}
     for part in part_list:
         for plasmid in plasmid_collection.componentDefinitions:
@@ -162,20 +249,72 @@ def get_compatible_plasmids(
     return selected_plasmids
 
 
-# TODO potenitally replace each componentdefinition with a SBH URI, or extract definitions from SBH before calling
 def translate_abstract_to_plasmids(
     abstract_design_doc: sbol2.Document,
     plasmid_collection: sbol2.Document,
     backbone_doc: sbol2.Document,
-):
-    abstract_design_def = extract_toplevel_definition(abstract_design_doc)
+) -> Set[MocloPlasmid]:
+    """
+    Translates an abstract SBOLCanvas design into a set of compatible MoClo plasmid assemblies.
+
+    Takes an abstract design, identifies the appropriate component
+    definitions and combinatorial derivations, and produces all possible plasmid
+    combinations that can be assembled using the provided backbone and plasmid
+    collection.
+
+    Args:
+        abstract_design_doc:
+            The :class:`sbol2.Document` representing the abstract genetic design.
+            May include either a single component definition (generic design) or
+            one or more combinatorial derivations (combinatorial design).
+        plasmid_collection:
+            The :class:`sbol2.Document` containing the available MoClo plasmid
+            components used for matching and assembly.
+        backbone_doc:
+            The :class:`sbol2.Document` defining the backbone plasmid into which
+            parts are assembled.
+
+    Returns:
+        Set[MocloPlasmid]:
+            - For combinatorial designs: a **set** of unique compatible plasmids
+              (`MocloPlasmid` objects) representing all enumerated design variants.
+            - For generic designs: a **set** of compatible plasmids for the single
+              design instance.
+    """
     backbone_def = extract_toplevel_definition(backbone_doc)
-
-    ordered_part_definitions = extract_design_parts(
-        abstract_design_def, abstract_design_doc
-    )
-
-    plasmid_dict = construct_plasmid_dict(ordered_part_definitions, plasmid_collection)
     backbone_plasmid = MocloPlasmid(backbone_def.displayId, backbone_def, backbone_doc)
 
-    return get_compatible_plasmids(plasmid_dict, backbone_plasmid)
+    # combinatorial design
+    if len(abstract_design_doc.combinatorialderivations) > 0:
+        abstract_design_def = abstract_design_doc.getComponentDefinition(
+            abstract_design_doc.combinatorialderivations[0].masterTemplate
+        )
+
+        combinatorial_part_dict = extract_combinatorial_design_parts(
+            abstract_design_def, abstract_design_doc, plasmid_collection
+        )
+        enumerated_part_list = enumerate_design_variants(combinatorial_part_dict)
+
+        final_plasmid_list = []
+
+        for design in enumerated_part_list:
+            plasmid_dict = construct_plasmid_dict(design, plasmid_collection)
+            final_plasmid_list += get_compatible_plasmids(
+                plasmid_dict, backbone_plasmid
+            )
+
+        return set(final_plasmid_list)
+
+    # generic design
+    else:
+        abstract_design_def = extract_toplevel_definition(abstract_design_doc)
+
+        ordered_part_definitions = extract_design_parts(
+            abstract_design_def, abstract_design_doc
+        )
+
+        plasmid_dict = construct_plasmid_dict(
+            ordered_part_definitions, plasmid_collection
+        )
+
+        return set(get_compatible_plasmids(plasmid_dict, backbone_plasmid))
