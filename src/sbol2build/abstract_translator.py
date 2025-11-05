@@ -1,6 +1,6 @@
 import sbol2
 import itertools
-from typing import Dict, List, Set
+from typing import Dict, List
 from .constants import FUSION_SITES
 
 
@@ -82,6 +82,24 @@ def extract_design_parts(
     return [
         doc.getComponentDefinition(component.definition) for component in component_list
     ]
+
+
+def copy_sequences(component_definition, target_doc, collection_doc):
+    """Copy all sequences referenced by a ComponentDefinition into target_doc."""
+    subdefinitions = extract_design_parts(component_definition, collection_doc)
+
+    for seq_uri in component_definition.sequences:
+        seq_obj = component_definition.doc.find(seq_uri)
+        if seq_obj is not None:
+            seq_obj.copy(target_doc)
+
+    for subdefinition in subdefinitions:
+        print(subdefinition.displayId)
+        subdefinition.copy(target_doc)
+        for seq_uri in subdefinition.sequences:
+            seq_obj = component_definition.doc.find(seq_uri)
+            if seq_obj is not None:
+                seq_obj.copy(target_doc)
 
 
 def extract_combinatorial_design_parts(
@@ -253,7 +271,7 @@ def translate_abstract_to_plasmids(
     abstract_design_doc: sbol2.Document,
     plasmid_collection: sbol2.Document,
     backbone_doc: sbol2.Document,
-) -> Set[MocloPlasmid]:
+) -> List[MocloPlasmid]:
     """
     Translates an abstract SBOLCanvas design into a set of compatible MoClo plasmid assemblies.
 
@@ -275,10 +293,10 @@ def translate_abstract_to_plasmids(
             parts are assembled.
 
     Returns:
-        Set[MocloPlasmid]:
-            - For combinatorial designs: a **set** of unique compatible plasmids
+        List[MocloPlasmid]:
+            - For combinatorial designs: a list of unique compatible plasmids
               (`MocloPlasmid` objects) representing all enumerated design variants.
-            - For generic designs: a **set** of compatible plasmids for the single
+            - For generic designs: a list of compatible plasmids for the single
               design instance.
     """
     backbone_def = extract_toplevel_definition(backbone_doc)
@@ -295,15 +313,21 @@ def translate_abstract_to_plasmids(
         )
         enumerated_part_list = enumerate_design_variants(combinatorial_part_dict)
 
-        final_plasmid_list = []
+        seen = set()
+        ordered_unique_plasmids = []
 
         for design in enumerated_part_list:
             plasmid_dict = construct_plasmid_dict(design, plasmid_collection)
-            final_plasmid_list += get_compatible_plasmids(
+            compatible_plasmids = get_compatible_plasmids(
                 plasmid_dict, backbone_plasmid
             )
 
-        return set(final_plasmid_list)
+            for plasmid in compatible_plasmids:
+                if plasmid not in seen:
+                    seen.add(plasmid)
+                    ordered_unique_plasmids.append(plasmid)
+
+        return ordered_unique_plasmids
 
     # generic design
     else:
@@ -317,4 +341,4 @@ def translate_abstract_to_plasmids(
             ordered_part_definitions, plasmid_collection
         )
 
-        return set(get_compatible_plasmids(plasmid_dict, backbone_plasmid))
+        return get_compatible_plasmids(plasmid_dict, backbone_plasmid)
