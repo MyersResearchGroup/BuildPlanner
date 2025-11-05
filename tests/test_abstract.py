@@ -5,9 +5,12 @@
 # test 3: (FUTURE) abstract design with multiple TUs
 
 import sbol2
-import os
-import sys
 import unittest
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+
 from sbol2build.abstract_translator import (
     translate_abstract_to_plasmids,
     copy_sequences,
@@ -16,8 +19,6 @@ from sbol2build.abstract_translator import (
 from sbol2build import (
     golden_gate_assembly_plan,
 )
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 
 class Test_Abstract_Translation_Functions(unittest.TestCase):
