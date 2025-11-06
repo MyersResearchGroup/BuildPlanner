@@ -98,6 +98,49 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
             "Combinatorial assembly failed to produce 2 composites",
         )
 
+    def test_complex_combinatorial_translation(
+        self,
+    ):  # testing combinatorial design with 3 variable promoters and RBSs
+        complex_comb_doc = sbol2.Document()
+        complex_comb_doc.read("tests/test_files/complex_combinatorial_abstract.xml")
+
+        comb_plasmid_list = translate_abstract_to_plasmids(
+            complex_comb_doc, self.plasmid_collection, self.DVK_AE_doc
+        )
+
+        self.assertEqual(
+            len(comb_plasmid_list),
+            8,
+            f"There should be 8 plasmids in the abstract translation, found {len(comb_plasmid_list)}",
+        )
+
+        # Run through sbol2build to test composite count
+        part_documents = []
+
+        for mocloPlasmid in comb_plasmid_list:
+            temp_doc = sbol2.Document()
+            mocloPlasmid.definition.copy(temp_doc)
+            copy_sequences(mocloPlasmid.definition, temp_doc, self.plasmid_collection)
+            part_documents.append(temp_doc)
+
+        assembly_doc = sbol2.Document()
+        assembly_obj = golden_gate_assembly_plan(
+            "complex_combinatorial_assembly_plan",
+            part_documents,
+            self.DVK_AE_doc,
+            "BsaI",
+            assembly_doc,
+        )
+
+        composite_list = assembly_obj.run()
+        assembly_doc.write("complex_comb_assembly.xml")
+
+        self.assertEqual(
+            len(composite_list),
+            9,
+            f"Combinatorial assembly failed to produce 9 composites, found {len(composite_list)}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
