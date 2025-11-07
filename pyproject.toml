@@ -38,3 +38,8 @@ test = [
 [project.urls]
 "Homepage" = "https://github.com/MyersResearchGroup/SBOL2Build"
 "Bug Tracker" = "https://github.com/MyersResearchGroup/SBOL2Build/issues"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.0",
+]
