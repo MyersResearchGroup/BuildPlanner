@@ -42,6 +42,7 @@ Representative use cases
    :caption: User Guide
 
    installation
+   cli
    quickstart
    examples/offline_lvl1
    examples/transformation_pudu

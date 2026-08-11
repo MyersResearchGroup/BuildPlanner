@@ -5,6 +5,7 @@ from buildcompiler.api import (
     assembly_lvl1,
     assembly_lvl2,
     domestication,
+    plating,
     transformation,
 )
 from buildcompiler.domain import (
@@ -12,6 +13,7 @@ from buildcompiler.domain import (
     IndexedBackbone,
     IndexedPlasmid,
     IndexedReagent,
+    IndexedStrain,
     MaterialState,
     StageStatus,
 )
@@ -192,3 +194,22 @@ def test_transformation_public_function_example():
     assert result.status == StageStatus.SUCCESS
     assert result.products
     assert doc.find(result.products[0].identity) is not None
+
+
+def test_plating_public_function_example():
+    strains = [
+        IndexedStrain("strain_b", display_id="strain_b"),
+        IndexedStrain("strain_a", display_id="strain_a"),
+    ]
+
+    result = plating(strains, plate_id="plate_demo")
+
+    assert result.status == StageStatus.SUCCESS
+    assert result.json_intermediate == {
+        "bacterium_locations": {"A1": "strain_b", "A2": "strain_a"}
+    }
+    assert [product.state for product in result.products] == [
+        MaterialState.PLATED,
+        MaterialState.PLATED,
+    ]
+    assert result.products[0].metadata["well"] == "A1"

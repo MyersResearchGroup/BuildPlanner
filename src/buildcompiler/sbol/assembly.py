@@ -138,8 +138,7 @@ class AssemblyService:
     def _implementation_from_plasmid_record(
         self, record: IndexedPlasmid, source_document: sbol2.Document
     ) -> sbol2.Implementation:
-        impl_identity = record.metadata.get("implementation_identity")
-        implementation = source_document.find(impl_identity) if impl_identity else None
+        implementation = self._implementation_from_metadata(record, source_document)
 
         if implementation is None:
             component = self._component_from_record(record, source_document, "plasmid")
@@ -161,16 +160,31 @@ class AssemblyService:
     def _implementation_from_record(
         self, record: IndexedReagent, source_document: sbol2.Document
     ) -> sbol2.Implementation:
-        impl_identity = (
-            record.metadata.get("implementation_identity") or record.identity
-        )
-        implementation = source_document.find(impl_identity)
+        implementation = self._implementation_from_metadata(record, source_document)
+        if implementation is None:
+            implementation = source_document.find(record.identity)
         if not isinstance(implementation, sbol2.Implementation):
             raise ValueError(
                 "Missing SBOL Implementation for reagent "
                 f"{record.identity}; expected metadata['implementation_identity'] or identity to resolve"
             )
         return implementation
+
+    def _implementation_from_metadata(
+        self,
+        record: IndexedPlasmid | IndexedReagent,
+        source_document: sbol2.Document,
+    ) -> sbol2.Implementation | None:
+        identities = []
+        singular = record.metadata.get("implementation_identity")
+        if singular:
+            identities.append(singular)
+        identities.extend(record.metadata.get("implementation_identities", []))
+        for identity in identities:
+            implementation = source_document.find(identity)
+            if isinstance(implementation, sbol2.Implementation):
+                return implementation
+        return None
 
     def _indexed_product_from_legacy_product(
         self, product, job: AssemblyJob

@@ -14,6 +14,7 @@ from buildcompiler.domain import (
     DesignKind,
     FullBuildResult,
     IndexedPlasmid,
+    IndexedStrain,
     MissingBuildInput,
     StageResult,
     StageStatus,
@@ -26,6 +27,7 @@ from buildcompiler.stages import (
     AssemblyLvl1Stage,
     AssemblyLvl2Stage,
     DomesticationStage,
+    PlatingStage,
     TransformationStage,
 )
 
@@ -56,6 +58,8 @@ class FullBuildExecutor:
         if self.transformation_stage is None and options.transformation.enabled:
             self.transformation_stage = TransformationStage(options=options)
         self.plating_stage = plating_stage
+        if self.plating_stage is None and self.transformation_stage is not None:
+            self.plating_stage = PlatingStage(options=options)
 
     @classmethod
     def from_dependencies(
@@ -109,7 +113,6 @@ class FullBuildExecutor:
         warnings: list[Any] = list(plan.warnings)
         seen_products: set[str] = set()
         transformed: set[str] = set()
-        plated: set[str] = set()
 
         for _ in range(self.context.options.execution.max_iterations):
             progress = False
@@ -146,7 +149,6 @@ class FullBuildExecutor:
                                 result.products,
                                 stage_results,
                                 transformed,
-                                plated,
                                 final_products,
                                 seen_products,
                                 missing_by_key,
@@ -172,6 +174,14 @@ class FullBuildExecutor:
             if not progress:
                 break
 
+        plating_failed = self._plate_transformed_products(
+            stage_results=stage_results,
+            final_products=final_products,
+            missing_by_key=missing_by_key,
+            approvals=approvals,
+            warnings=warnings,
+        )
+
         unresolved = [
             m
             for m in missing_by_key.values()
@@ -181,7 +191,11 @@ class FullBuildExecutor:
         products = list(final_products.values())
         status = (
             BuildStatus.SUCCESS
-            if (not unresolved and not any(pending[s] for s in pending))
+            if (
+                not unresolved
+                and not any(pending[s] for s in pending)
+                and not plating_failed
+            )
             else (BuildStatus.PARTIAL_SUCCESS if products else BuildStatus.FAILED)
         )
         from buildcompiler.reporting import build_graph, build_report, build_summary
@@ -319,7 +333,6 @@ class FullBuildExecutor:
         products: list[Any],
         stage_results: list[StageResult],
         transformed: set[str],
-        plated: set[str],
         final_products: dict[str, Any],
         seen_products: set[str],
         missing_by_key: dict[tuple, MissingBuildInput],
@@ -355,12 +368,42 @@ class FullBuildExecutor:
                     seen_products.add(transformed_product.identity)
                     final_products[transformed_product.identity] = transformed_product
             progress = True
-            if self.plating_stage is None:
-                continue
-            for out in t_result.products:
-                if out.identity in plated:
-                    continue
-                plated.add(out.identity)
-                stage_results.append(self.plating_stage.run(out))
-                progress = True
         return progress
+
+    def _plate_transformed_products(
+        self,
+        *,
+        stage_results: list[StageResult],
+        final_products: dict[str, Any],
+        missing_by_key: dict[tuple, MissingBuildInput],
+        approvals: dict[str, Any],
+        warnings: list[Any],
+    ) -> bool:
+        if self.plating_stage is None:
+            return False
+        strains = sorted(
+            (
+                product
+                for product in final_products.values()
+                if isinstance(product, IndexedStrain)
+            ),
+            key=lambda product: product.identity,
+        )
+        if not strains:
+            return False
+        result = self.plating_stage.run(
+            strains,
+            source_document=self.context.build_document,
+            target_document=self.context.build_document,
+        )
+        stage_results.append(result)
+        warnings.extend(result.warnings)
+        for approval in result.required_approvals:
+            approvals[str(approval)] = approval
+        for missing in result.missing_inputs:
+            missing_by_key[self._missing_key(missing)] = missing
+        if result.status in (StageStatus.SUCCESS, StageStatus.PARTIAL_SUCCESS):
+            for product in result.products:
+                final_products[product.identity] = product
+            return result.status != StageStatus.SUCCESS
+        return True

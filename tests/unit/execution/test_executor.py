@@ -424,6 +424,7 @@ def test_executor_chains_transformation_when_enabled():
 
     assert result.status == BuildStatus.SUCCESS
     assert any(sr.stage == BuildStage.TRANSFORMATION for sr in result.stage_results)
+    assert any(sr.stage == BuildStage.PLATING for sr in result.stage_results)
     assert any(
         product.metadata.get("source_stage") == "transformation"
         for product in result.final_products

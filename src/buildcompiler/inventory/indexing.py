@@ -231,8 +231,9 @@ def _insert_identities(
 
 
 def _backbone_stage(fusion_sites: tuple[str, ...]) -> BuildStage:
+    lvl1_backbone_sites = {frozenset(pair) for pair in LVL2_FUSION_SITE_ORDER}
     return (
-        BuildStage.ASSEMBLY_LVL2
-        if list(fusion_sites) in LVL2_FUSION_SITE_ORDER
-        else BuildStage.ASSEMBLY_LVL1
+        BuildStage.ASSEMBLY_LVL1
+        if frozenset(fusion_sites) in lvl1_backbone_sites
+        else BuildStage.ASSEMBLY_LVL2
     )

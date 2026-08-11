@@ -17,6 +17,7 @@ from .compiler import (
     assembly_lvl2,
     domestication,
     full_build,
+    plating,
     transformation,
 )
 from .options import (
@@ -85,6 +86,7 @@ __all__ = [
     "domestication",
     "full_build",
     "index_collections",
+    "plating",
     "transformation",
     "deserialize_build_plan",
     "dumps_json_dto",
