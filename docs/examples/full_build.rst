@@ -19,7 +19,7 @@ Level-2 build example
 
    import sbol2
 
-   from buildcompiler.buildcompiler import BuildCompiler
+   from buildcompiler import BuildCompiler
 
    test_files = Path("tests/test_files")
    collection_docs = []

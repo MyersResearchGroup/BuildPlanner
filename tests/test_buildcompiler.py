@@ -10,7 +10,8 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
-from buildcompiler.buildcompiler import BuildCompiler, _extract_lvl2_TUs
+from buildcompiler import BuildCompiler
+from buildcompiler.buildcompiler import _extract_lvl2_TUs
 
 from buildcompiler.abstract_translator import extract_toplevel_definition, get_or_pull
 from buildcompiler.api import domestication

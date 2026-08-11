@@ -18,8 +18,8 @@ Load the local fixture collections:
 
    import sbol2
 
+   from buildcompiler import BuildCompiler
    from buildcompiler.abstract_translator import extract_toplevel_definition
-   from buildcompiler.buildcompiler import BuildCompiler
 
    repo = Path.cwd()
    test_files = repo / "tests" / "test_files"

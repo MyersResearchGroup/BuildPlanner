@@ -8,8 +8,9 @@ MoClo assembly, transformation, and plating.
 
 The repository currently exposes two useful layers:
 
-* A legacy, artifact-producing compiler in :mod:`buildcompiler.buildcompiler`
-  that is used by the offline notebooks and PUDU examples.
+* An artifact-producing compiler exported as :class:`buildcompiler.BuildCompiler`
+  that is used by the offline notebooks and PUDU examples. Its implementation
+  remains in :mod:`buildcompiler.buildcompiler` for compatibility.
 * A newer modular API in :mod:`buildcompiler.api`, :mod:`buildcompiler.stages`,
   :mod:`buildcompiler.planning`, and :mod:`buildcompiler.execution`.
 
