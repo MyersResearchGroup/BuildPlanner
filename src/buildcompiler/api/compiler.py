@@ -18,6 +18,7 @@ from buildcompiler.stages import (
     AssemblyLvl1Stage,
     AssemblyLvl2Stage,
     DomesticationStage,
+    PlatingStage,
     TransformationStage,
 )
 
@@ -311,6 +312,28 @@ def transformation(
         plasmid,
         source_document=source_document,
         target_document=target_document or source_document,
+    )
+
+
+def plating(
+    strain: Any,
+    *,
+    source_document: sbol2.Document | None = None,
+    target_document: sbol2.Document | None = None,
+    options: BuildOptions | None = None,
+    plate_id: str = "buildcompiler_plate_1",
+    advanced_parameters: dict[str, Any] | None = None,
+) -> Any:
+    """Run deterministic plating for one or more transformed strains."""
+
+    return PlatingStage(
+        options=options or BuildOptions(),
+        plate_id=plate_id,
+        advanced_parameters=advanced_parameters,
+    ).run(
+        strain,
+        source_document=source_document,
+        target_document=target_document,
     )
 
 

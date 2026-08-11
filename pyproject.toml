@@ -31,8 +31,13 @@ classifiers = [
 dependencies = [
     "sbol2",
     "biopython", 
-    "pydna"
+    "pydna",
+    "rich>=14,<15",
+    "typer>=0.20,<1"
 ]
+
+[project.scripts]
+buildc = "buildcompiler.cli:app"
 
 [project.optional-dependencies]
 test = [

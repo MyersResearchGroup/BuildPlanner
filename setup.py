@@ -35,7 +35,10 @@ setup(
         "sbol2",
         "biopython",
         "pydna",
+        "rich>=14,<15",
+        "typer>=0.20,<1",
     ],
+    entry_points={"console_scripts": ["buildc=buildcompiler.cli:app"]},
     extras_require={
         "test": [
             "pytest>=7,<9",

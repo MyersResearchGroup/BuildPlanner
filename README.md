@@ -183,6 +183,25 @@ result = full_build(
 
 `BuildCompiler.__init__` should stay lightweight and dependency-injected. Automatic SynBioHub collection indexing belongs in `BuildCompiler.from_synbiohub(...)`.
 
+## Command-line interface
+
+Installing BuildCompiler provides the modern, typed `buildc` CLI. Golden Gate is
+the MVP workflow; the command structure keeps workflow selection explicit so
+additional build techniques can be added without replacing the interface.
+
+```bash
+buildc run \
+  --design design.xml \
+  --inventory inventory.xml \
+  --chassis DH5alpha \
+  --protocol manual \
+  --output build/
+```
+
+The complete surface is `plan`, `run`, `assemble`, `transform`, `plate`, and
+`inspect`. Run `buildc --help` or see the [CLI guide](docs/cli.rst) for artifact
+contracts, SynBioHub authentication, machine-readable output, and exit codes.
+
 ## Local development
 
 Recommended local workflow:
@@ -270,4 +289,3 @@ Run these bash commands to establish your SynBioHub account for collection acces
 Then run the tests with:
 
 `uv run python -m unittest discover -s tests`
-

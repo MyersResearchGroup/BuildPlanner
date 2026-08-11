@@ -1060,7 +1060,6 @@ def ligation(
             if remaining_parts_before == remaining_parts_after:
                 it += 1
             if it > 5:  # 5 was chosen arbitrarily to avoid infinite loops
-                print(groups)
                 raise ValueError(
                     "No match found, check the parts and their fusion sites"
                 )
@@ -1218,9 +1217,10 @@ def ligation(
             [composite_component_definition, composite_seq, composite_implementation]
         )
 
-        final_document.add_list(
-            [composite_component_definition, composite_seq, composite_implementation]
-        )
+        if final_document is not source_document:
+            final_document.add_list(
+                [composite_component_definition, composite_seq, composite_implementation]
+            )
 
         product_impl_list.append(composite_implementation)
         composite_number += 1
