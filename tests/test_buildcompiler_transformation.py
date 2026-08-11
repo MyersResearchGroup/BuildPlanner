@@ -8,7 +8,7 @@ import sbol2
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 from buildcompiler.abstract_translator import extract_toplevel_definition
-from buildcompiler.buildcompiler import BuildCompiler
+from buildcompiler import BuildCompiler
 from buildcompiler.constants import ENGINEERED_PLASMID
 
 

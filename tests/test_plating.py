@@ -9,7 +9,7 @@ import sbol2
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
-from buildcompiler.buildcompiler import BuildCompiler
+from buildcompiler import BuildCompiler
 from buildcompiler.constants import ENGINEERED_PLASMID, ORGANISM_STRAIN
 from buildcompiler.robotutils import generate_96_well_positions, normalize_plating_input
 

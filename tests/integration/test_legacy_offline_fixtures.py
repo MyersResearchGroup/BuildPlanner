@@ -3,7 +3,7 @@ from pathlib import Path
 import sbol2
 
 from buildcompiler.api import domestication
-from buildcompiler.buildcompiler import BuildCompiler
+from buildcompiler import BuildCompiler
 from buildcompiler.domain import IndexedBackbone, IndexedReagent, StageStatus
 from buildcompiler.inventory import Inventory
 

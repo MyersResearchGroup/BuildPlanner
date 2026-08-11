@@ -21,9 +21,9 @@ Example
 
    import sbol2
 
-   from buildcompiler.abstract_translator import extract_toplevel_definition
+   from buildcompiler import BuildCompiler
    from buildcompiler.adapters.pudu import write_assembly_pudu_input_json
-   from buildcompiler.buildcompiler import BuildCompiler
+   from buildcompiler.abstract_translator import extract_toplevel_definition
 
    test_files = Path("tests/test_files")
    collection_docs = []
